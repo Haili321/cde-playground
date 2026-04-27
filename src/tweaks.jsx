@@ -63,11 +63,17 @@ function TweakCell({ label, sub, value, children, color }) {
 }
 
 function TweaksPanel({ tweaks, setTweak, visible }) {
-  // Now always rendered as a horizontal strip; `visible` is ignored.
-  const A_T = "oklch(0.55 0.13 250)";
-  const A_A = "oklch(0.58 0.13 35)";
-  const A_F = "oklch(0.52 0.13 300)";
-  const A_C = "oklch(0.55 0.13 150)";
+  // CDE-relevant controls only: dataset toggle, integration time T (was alpha),
+  // convection strength w0 (was beta), and a τ (step size) display.
+  // Underlying tweak keys (alpha/beta/...) are kept so app.jsx wiring stays
+  // intact — only the labels change.
+  const A_DIFF = "oklch(0.55 0.13 250)";   // diffusion blue
+  const A_VEL  = "oklch(0.45 0.20 320)";   // velocity violet (Eq.10)
+
+  const T = (0.5 + tweaks.alpha * 4.5).toFixed(2);    // matches cde_math wiring
+  const w0 = (tweaks.beta * 0.15).toFixed(3);
+  const tau = 0.25;
+  const stepCount = Math.round((0.5 + tweaks.alpha * 4.5)/tau);
 
   return (
     <div style={{
@@ -80,63 +86,55 @@ function TweaksPanel({ tweaks, setTweak, visible }) {
           超参数 · TWEAKS
         </div>
         <div style={{fontSize:10.5, color:"#827d75"}}>
-          所有旋钮联动架构图、示例图、损失与公式
+          滑块联动剧场、训练动力学、Figure 1 复现
         </div>
       </div>
 
       <div style={{display:"grid",
-        gridTemplateColumns:"minmax(170px, 0.9fr) repeat(5, minmax(110px, 1fr)) minmax(140px, 0.9fr)",
+        gridTemplateColumns:"minmax(170px, 0.9fr) repeat(2, minmax(150px, 1.2fr)) minmax(180px, 1.2fr) minmax(140px, 0.9fr)",
         gap:20, alignItems:"end"}}>
 
-        <TweakCell label="数据集" value={tweaks.dataset==="hetero"?"异质":"同质"} color="#1b1a18">
+        <TweakCell label="数据集" value={tweaks.dataset==="hetero"?"异质 (Texas-like)":"同质 (Cora-like)"} color="#1b1a18">
           <SegButton
             value={tweaks.dataset}
             onChange={v=>setTweak("dataset", v)}
             options={[
-              {value:"hetero", label:"Texas"},
-              {value:"homo",   label:"Cora"},
+              {value:"hetero", label:"异质"},
+              {value:"homo",   label:"同质"},
             ]}/>
         </TweakCell>
 
-        <TweakCell label="α" sub="扩散步长" value={tweaks.alpha.toFixed(2)} color={A_T}>
+        <TweakCell label="T" sub="积分时间" value={T} color={A_DIFF}>
           <Slider value={tweaks.alpha} min={0.1} max={1.0} step={0.05}
-            color={A_T} onChange={v=>setTweak("alpha", v)}/>
+            color={A_DIFF} onChange={v=>setTweak("alpha", v)}/>
         </TweakCell>
 
-        <TweakCell label="β" sub="融合" value={tweaks.beta.toFixed(2)} color={A_F}>
-          <Slider value={tweaks.beta} min={0.0} max={1.0} step={0.05}
-            color={A_F} onChange={v=>setTweak("beta", v)}/>
+        <TweakCell label="w₀" sub="对流强度 (Eq.10)" value={w0} color={A_VEL}>
+          <Slider value={tweaks.beta} min={0.0} max={1.0} step={0.02}
+            color={A_VEL} onChange={v=>setTweak("beta", v)}/>
         </TweakCell>
 
-        <TweakCell label="L" sub="拓扑层数" value={tweaks.topLayers} color={A_T}>
-          <Slider value={tweaks.topLayers} min={1} max={8} step={1}
-            color={A_T} onChange={v=>setTweak("topLayers", Math.round(v))}/>
-        </TweakCell>
-
-        <TweakCell label="L" sub="属性层数" value={tweaks.attrLayers} color={A_A}>
-          <Slider value={tweaks.attrLayers} min={1} max={8} step={1}
-            color={A_A} onChange={v=>setTweak("attrLayers", Math.round(v))}/>
-        </TweakCell>
-
-        <TweakCell label="Lc" sub="C-prop" value={tweaks.cpropLayers} color={A_C}>
-          <Slider value={tweaks.cpropLayers} min={0} max={8} step={1}
-            color={A_C} onChange={v=>setTweak("cpropLayers", Math.round(v))}/>
+        <TweakCell label="积分细节" sub="" value={`τ=${tau}, ${stepCount} steps`} color="#827d75">
+          <div style={{fontSize:10.5, color:"#827d75", lineHeight:1.55,
+            background:"#fdfaf2", padding:"6px 8px", borderRadius:4, border:"1px solid #f0eadf"}}>
+            forward Euler · X(t+τ) = X(t) + τ·f(X(t))
+          </div>
         </TweakCell>
 
         <TweakCell label="显示" value="" color="#3d3a35">
-          <div style={{display:"flex", gap:10, marginTop:2}}>
+          <div style={{display:"flex", gap:12, marginTop:2}}>
             <label style={{fontSize:10.5, display:"flex", gap:4, alignItems:"center", color:"#3d3a35", cursor:"pointer"}}>
               <input type="checkbox" checked={tweaks.showAttrGraph}
                 onChange={e=>setTweak("showAttrGraph", e.target.checked)}/>
-              属性图
-            </label>
-            <label style={{fontSize:10.5, display:"flex", gap:4, alignItems:"center", color:"#3d3a35", cursor:"pointer"}}>
-              <input type="checkbox" checked={tweaks.animateIter}
-                onChange={e=>setTweak("animateIter", e.target.checked)}/>
-              逐层
+              velocity 箭头
             </label>
           </div>
         </TweakCell>
+      </div>
+      <div style={{marginTop:10, fontSize:10.5, color:"#827d75", lineHeight:1.55}}>
+        <span style={{color:A_DIFF, fontWeight:600}}>T</span> = 积分到的目标时间（论文饱和点 ~1.0；越大越「深」但也容易 over-smooth）·
+        <span style={{color:A_VEL, fontWeight:600, marginLeft:6}}>w₀</span> = 对流权重 W 的对角强度（toy seed；w₀=0 ⇒ CDE 退化为 GRAND）·
+        论文里 W 是端到端学的
       </div>
     </div>
   );

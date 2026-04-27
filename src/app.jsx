@@ -283,7 +283,7 @@ function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId 
   };
 
   const renderPanel = (pred, proj, panelKind) => {
-    const showVel = panelKind === "cde";
+    const showVel = panelKind === "cde" && tweaks.showAttrGraph !== false;
     return (
       <svg viewBox={`0 0 ${PW} ${PH}`}
         style={{width:"100%", height:"auto", display:"block",
@@ -795,14 +795,6 @@ function App() {
   const steps = window.STEPS;
   const step = steps[idx];
   const activeSet = useMemo(()=>new Set(step.active), [step]);
-
-  // REAL DGAC pipeline result — kept for the legacy panels (Loss/Confidence/Hetero)
-  // until they're rewritten for CDE in the next pass.
-  const dgac = useMemo(()=>{
-    const G = window.DEMO_GRAPHS[tweaks.dataset];
-    return window.DGAC_MATH.runDGAC(G, tweaks);
-  }, [tweaks.dataset, tweaks.alpha, tweaks.beta,
-      tweaks.topLayers, tweaks.attrLayers, tweaks.cpropLayers]);
 
   // CDE result — runs both GRAND-only and CDE forward passes, returns full
   // trajectories of X(t) for the time-scrubbed dual-panel theatre.
