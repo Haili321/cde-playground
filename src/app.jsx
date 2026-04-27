@@ -893,7 +893,8 @@ function App() {
                 tweaks={tweaks} stepId={step.id}/>
             </div>
 
-            <window.LossBreakdown active={step.id==="loss"} tick={iter}/>
+            <window.LossBreakdown active={step.id==="loss"||step.id==="output"} tick={iter}
+              cde={cde} tIdx={tIdx} tweaks={tweaks}/>
           </div>
         </div>
 
