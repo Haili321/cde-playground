@@ -148,9 +148,9 @@ function PipelineDiagram({ activeSet, tweaks, onStepJump }) {
     diff: 75,    // top row (diffusion)
     conv: 175,   // bottom row (convection)
     mid:  125,   // middle (combine/ODE/X(T)/cls/ŷ)
-    vel:  246,   // below convection (velocity source — Eq.10)
+    vel:  238,   // below convection (velocity source — Eq.10)
     loss: 22,    // top bar (benchmark / ACC)
-    col:  290,
+    col:  297,   // column title row (lifted to clear velocity block)
   };
 
   return (
@@ -159,41 +159,41 @@ function PipelineDiagram({ activeSet, tweaks, onStepJump }) {
       <PipeBlock x={X.combine} y={Y.loss} w={X.cls + 130 - X.combine} h={36}
         subTex="\text{Roman-empire: GRAND }71.6\%\;\to\;\text{CDE-GRAND }91.6\%\;\;\bigstar+20\%"
         color={A_LOSS} active={on("loss")} dim={!on("loss")}
-        onClick={()=>go("loss")}/>
+        onClick={()=>go("benchmark")}/>
 
       {/* ── source: G = (V, E, w) ── */}
       <PipeBlock x={X.graph} y={Y.mid-14} w={110} h={54}
         label="图 G" subTex="(V,\,E,\,w)" color="#3d3a35"
-        active={on("input-x")||on("input-a")} onClick={()=>go("input")}/>
+        active={on("input-x")||on("input-a")} onClick={()=>go("init")}/>
 
       {/* ── X(0) input ── */}
       <PipeBlock x={X.input} y={Y.mid-14} w={100} h={54}
         label="X(0)" subTex="\mathbb R^{N\times r}" color="#3d3a35"
-        active={on("input-x")||on("input-a")} onClick={()=>go("input")}/>
+        active={on("input-x")||on("input-a")} onClick={()=>go("init")}/>
 
       {/* ── diffusion block (top row) — GRAND-style ── */}
       <PipeBlock x={X.diff} y={Y.diff} w={260} h={56}
         label="扩散项 · DIFFUSION"
         subTex="\mathrm{div}(D\odot\nabla X)\;\;\text{(Eq.5)}"
-        color={A_DIFF} active={on("top-diff")||on("s-enc")} onClick={()=>go("topology")}/>
+        color={A_DIFF} active={on("top-diff")||on("s-enc")} onClick={()=>go("diffusion")}/>
 
       {/* ── convection block (bottom row) — CDE's contribution ── */}
       <PipeBlock x={X.diff} y={Y.conv} w={260} h={56}
         label="对流项 · CONVECTION"
         subTex="\mathrm{div}(V\odot X)\;\;\text{(Eq.9)}"
-        color={A_CONV} active={on("attr-diff")||on("a-enc")} onClick={()=>go("attribute")}/>
+        color={A_CONV} active={on("attr-diff")||on("a-enc")} onClick={()=>go("convection")}/>
 
       {/* ── velocity formula (★ FEATURED) — feeds the convection block ── */}
       <PipeBlock x={X.diff+30} y={Y.vel} w={200} h={42}
         label="velocity"
         subTex="V_{ij}=\sigma(W(x_j-x_i))"
-        color={A_VEL} active={on("fusion")} onClick={()=>go("fusion")} featured={true}/>
+        color={A_VEL} active={on("fusion")} onClick={()=>go("velocity")} featured={true}/>
 
       {/* ── attention variants annotation under diffusion (clickable to step "output") ── */}
       <text x={X.diff+130} y={Y.diff-8} textAnchor="middle"
         style={{fontSize:9.5, fill: on("output") ? A_VEL : "#a8a194", fontStyle:"italic",
           letterSpacing:"0.04em", cursor:"pointer"}}
-        onClick={()=>go("output")}>
+        onClick={()=>go("plugin")}>
         D = LAP / GAT / TRANS / GraphBel  (Eq.11/12)
       </text>
 
@@ -205,28 +205,28 @@ function PipelineDiagram({ activeSet, tweaks, onStepJump }) {
         label="dX/dt"
         subTex="\frac{\partial X}{\partial t}\;\;\text{(Eq.8)}"
         color={A_OUT} active={on("topology")||on("attribute")||on("fusion")}
-        onClick={()=>go("attribute")}/>
+        onClick={()=>go("convection")}/>
 
       {/* ── ODE solver ── */}
       <PipeBlock x={X.ode} y={Y.mid-14} w={130} h={54}
         label="ODE solver"
         subTex={`\\text{Euler / RK4}\\;\\;T=${(tweaks.alpha*5).toFixed(1)}`}
-        color={A_OUT} active={on("kmeans")} onClick={()=>go("kmeans")}/>
+        color={A_OUT} active={on("kmeans")} onClick={()=>go("ode")}/>
 
       {/* ── X(T) ── */}
       <PipeBlock x={X.xT} y={Y.mid-14} w={100} h={54}
         label="X(T)" subTex="\text{(终态)}"
-        color={A_OUT} active={on("kmeans")||on("cprop")} onClick={()=>go("cprop")}/>
+        color={A_OUT} active={on("kmeans")||on("cprop")} onClick={()=>go("classify")}/>
 
       {/* ── classifier ── */}
       <PipeBlock x={X.cls} y={Y.mid-14} w={130} h={54}
         label="MLP 分类头" subTex="\hat y_i=\arg\max_c\,f(x_i(T))"
-        color={A_OUT} active={on("cprop")} onClick={()=>go("cprop")}/>
+        color={A_OUT} active={on("cprop")} onClick={()=>go("classify")}/>
 
       {/* ── ŷ output ── */}
       <PipeBlock x={X.yhat} y={Y.mid-14} w={90} h={54}
         label="ŷ" subTex="\{1,\dots,C\}^{N}"
-        color={A_OUT} active={on("output")||on("cprop")} onClick={()=>go("output")}/>
+        color={A_OUT} active={on("output")||on("cprop")} onClick={()=>go("plugin")}/>
 
       {/* ── arrows ── */}
       {/* G → X(0) */}

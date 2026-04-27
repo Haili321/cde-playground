@@ -747,87 +747,87 @@ function FormulaPanel({ step, tweaks }) {
       </div>
 
       {/* step 1: input — 带属性图 G + X(0) */}
-      <Block active={id==="input"} color="#3d3a35" eyebrow="输入 · INPUT"
+      <Block active={id==="init"} color="#3d3a35" eyebrow="输入 · INPUT"
         onOpen={open} syms={["G","V","E","weight","N","r","Xt","xi","yu"]}>
-        <Eq hl={id==="input"}
+        <Eq hl={id==="init"}
           tex="\mathcal G=(V,\,E,\,w),\quad X(0)\in\mathbb R^{N\times r}"/>
-        <Eq hl={id==="input"}
+        <Eq hl={id==="init"}
           tex="x_i(t)\in\mathbb R^r,\;\; t\in[0,T]"/>
       </Block>
 
       {/* step 2: encode — 物理直觉 heat vs CDE */}
-      <Block active={id==="encode"} color={A_CONV} eyebrow="物理直觉 · HEAT vs CDE"
+      <Block active={id==="intuition"} color={A_CONV} eyebrow="物理直觉 · HEAT vs CDE"
         onOpen={open} syms={["Eq1Heat","Eq2CDE","HeatDiffusion","ConvectionDiffusion","partt","divOp","nablaOp","Dmatrix","Vmatrix"]}
         note="一杯静水 vs 一条河 —— 同一滴墨水，纯扩散和扩散+对流两种命运。CDE 把河流物理学搬到图上。">
-        <Eq hl={id==="encode"}
+        <Eq hl={id==="intuition"}
           tex="\text{Eq.1 (heat)}:\;\;\frac{\partial x}{\partial t}=\mathrm{div}(D\nabla x)"/>
-        <Eq hl={id==="encode"}
+        <Eq hl={id==="intuition"}
           tex="\text{Eq.2 (CDE)}:\;\;\frac{\partial x}{\partial t}=\mathrm{div}(D\nabla x)-\mathrm{div}(\mathbf v\,x)"/>
       </Block>
 
       {/* step 3: topology — 图扩散项 GRAND */}
-      <Block active={id==="topology"} color={A_DIFF} eyebrow="图上的扩散项 · DIFFUSION (GRAND)"
+      <Block active={id==="diffusion"} color={A_DIFF} eyebrow="图上的扩散项 · DIFFUSION (GRAND)"
         onOpen={open} syms={["Eq3Grad","Eq4Div","Eq5GRAND","gradX","divX","Amatrix","aij","hadamard","Imatrix","Dmatrix"]}
         note="把连续 PDE 在图上离散：边上的「梯度」= 端点特征差，节点上的「散度」= 邻居求和。代入 heat 方程得 GRAND 动力学（已有的扩散类 GNN 全在此框架下）。">
-        <Eq hl={id==="topology"}
+        <Eq hl={id==="diffusion"}
           tex="(\nabla X)_{ij}=x_j-x_i\;\;\text{(Eq.3)},\quad (\mathrm{div}\,\mathcal X)_i=\textstyle\sum_{j\in N(i)}\mathcal X_{ij}\;\;\text{(Eq.4)}"/>
-        <Eq hl={id==="topology"}
+        <Eq hl={id==="diffusion"}
           tex="\frac{dX(t)}{dt}=\mathrm{div}\bigl(D(X(t),t)\odot\nabla X(t)\bigr)=(A(X(t))-I)\,X(t)\;\;\text{(Eq.5)}"/>
       </Block>
 
       {/* step 4: attribute — 图对流项（CDE 核心 ★） */}
-      <Block active={id==="attribute"} color={A_CONV} eyebrow="图上的对流项 · CONVECTION ★"
+      <Block active={id==="convection"} color={A_CONV} eyebrow="图上的对流项 · CONVECTION ★"
         onOpen={open} syms={["Eq8CDEGraph","Eq9Conv","Vij","Vmatrix","hadamard","divX"]}
         note="CDE 在 GRAND 之上加的全部贡献。每条边 (i,j) 配速度向量 V_ij ∈ ℝ^r；节点的对流贡献 = 邻居特征与边速度的逐元素积之和。">
-        <Eq hl={id==="attribute"}
+        <Eq hl={id==="convection"}
           tex="\frac{\partial X}{\partial t}=\underbrace{\mathrm{div}(D\odot\nabla X)}_{\text{diffusion}}+\underbrace{\mathrm{div}(V\odot X)}_{\text{convection}}\;\;\text{(Eq.8)}"/>
-        <Eq hl={id==="attribute"}
+        <Eq hl={id==="convection"}
           tex="\bigl(\mathrm{div}(V\odot X)\bigr)_i=\textstyle\sum_{j:(i,j)\in E}V_{ij}\odot x_j\;\;\text{(Eq.9)}"/>
       </Block>
 
       {/* step 5: fusion — Velocity learnable formula (Eq.10 ★★) */}
-      <Block active={id==="fusion"} color={A_VEL} eyebrow="Velocity 公式 · VELOCITY (Eq.10) ★★"
+      <Block active={id==="velocity"} color={A_VEL} eyebrow="Velocity 公式 · VELOCITY (Eq.10) ★★"
         onOpen={open} syms={["Eq10Velocity","Vij","sigma","Wmatrix","xi","gradX"]}
         note="全文最重要一公式：速度由特征差驱动。同质邻居 → V≈0 → 退回纯扩散；异质邻居 → V 显著 → 对流主导。W 和 σ 让模型自己学「该往哪流」。">
-        <Eq hl={id==="fusion"}
+        <Eq hl={id==="velocity"}
           tex="V_{ij}(t)=\sigma\bigl(W\,(x_j(t)-x_i(t))\bigr)\;\;\text{(Eq.10)}"/>
       </Block>
 
       {/* step 6: kmeans — ODE solver */}
-      <Block active={id==="kmeans"} color={A_OUT} eyebrow="ODE 求解 · ODE SOLVER"
+      <Block active={id==="ode"} color={A_OUT} eyebrow="ODE 求解 · ODE SOLVER"
         onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt"]}
         note={`论文 T=1.0 已饱和，T=5.0 反而下降。RK4 在 Minesweeper 上比 Euler 显著好（Table 3：93.05 vs 87.13）。当前积分时间 T = ${tweaks.alpha.toFixed(2)}（playground 用 alpha 滑块代理）。`}>
-        <Eq hl={id==="kmeans"}
+        <Eq hl={id==="ode"}
           tex="X(t+\tau)=X(t)+\tau\,f(X(t)),\quad f(X)=\mathrm{div}(D\odot\nabla X)+\mathrm{div}(V\odot X)"/>
-        <Eq hl={id==="kmeans"}
+        <Eq hl={id==="ode"}
           tex="X(T)=X(0)+\int_0^T f(X(s))\,ds,\quad L=T/\tau\;\text{ steps}"/>
       </Block>
 
       {/* step 7: cprop — 节点分类输出 */}
-      <Block active={id==="cprop"} color={A_OUT} eyebrow="分类输出 · CLASSIFY"
+      <Block active={id==="classify"} color={A_OUT} eyebrow="分类输出 · CLASSIFY"
         onOpen={open} syms={["Algorithm1","Xt","Tint","yu"]}
         note="Algorithm 1 step 3-4：取 ODE 解的终态 X(T) 通过 MLP 分类头得到节点类别预测，标准 cross-entropy loss 端到端训练。">
-        <Eq hl={id==="cprop"}
+        <Eq hl={id==="classify"}
           tex="\hat y_i=\arg\max_{c}\,\mathrm{MLP}(x_i(T))_c"/>
       </Block>
 
       {/* step 8: loss — 异质 benchmark 表现 */}
-      <Block active={id==="loss"} color={A_LOSS} eyebrow="异质图 · BENCHMARK"
+      <Block active={id==="benchmark"} color={A_LOSS} eyebrow="异质图 · BENCHMARK"
         onOpen={open} syms={["hedge","hadj","yu","E"]}
         note="CDE-GRAND 在 9 个异质 benchmark 全部 SOTA 或并列。h_adj 越低改进越大：Roman-empire +20%，Minesweeper +19%，Wiki-cooc +6%（论文 Table 2）。">
-        <Eq hl={id==="loss"}
+        <Eq hl={id==="benchmark"}
           tex="h_{\mathrm{edge}}=\frac{|\{(u,v)\in E\,:\,y_u=y_v\}|}{|E|}\;\;\text{(Eq.6)}"/>
-        <Eq hl={id==="loss"}
+        <Eq hl={id==="benchmark"}
           tex="h_{\mathrm{adj}}=\frac{h_{\mathrm{edge}}-\sum_k D_k^2/(2|E|)^2}{1-\sum_k D_k^2/(2|E|)^2}\;\;\text{(Eq.7)}"/>
       </Block>
 
       {/* step 9: output — Plug-in 哲学 */}
-      <Block active={id==="output"} color={A_VEL} eyebrow="Plug-in 哲学 · PLUG-IN"
+      <Block active={id==="plugin"} color={A_VEL} eyebrow="Plug-in 哲学 · PLUG-IN"
         onOpen={open} syms={["Amatrix","aij","Eq11AttnTRANS","Eq12AttnGAT","Vmatrix"]}
         note="CDE = (任何 diffusion baseline) + 对流项。论文 Table 4：四种 baseline (LAP/GAT/TRANS/GraphBel) + CDE 都稳定提升。计算成本只增加 ~10% 训练 / ~1% 推理（Table 5）。">
-        <Eq hl={id==="output"}
+        <Eq hl={id==="plugin"}
           tex="\text{CDE-GRAND-TRANS}:\;\;a(x_i,x_j)=\mathrm{softmax}\!\bigl((W_K x_i)^\top W_Q x_j/\sqrt{d_k}\bigr)\;\;\text{(Eq.11)}"/>
-        <Eq hl={id==="output"}
+        <Eq hl={id==="plugin"}
           tex="\text{CDE-GRAND-GAT}:\;\;a(x_i,x_j)=\frac{\exp(\mathrm{LeakyReLU}(\mathbf a^\top[Wx_i\|Wx_j]))}{\sum_k\exp(\dots)}\;\;\text{(Eq.12)}"/>
       </Block>
 
