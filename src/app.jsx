@@ -317,14 +317,21 @@ function BottomStrip() {
     { k:"+20%", v:"Roman-empire ACC vs GRAND" },
     { k:"9/9", v:"异质 benchmark 全部 SOTA" },
     { k:"~1%", v:"推理时间 vs GRAND（几乎免费）" },
-    { k:"v_ij = σ(W(x_j−x_i))", v:"learnable per-edge velocity (Eq.10)" },
+    { tex:"V_{ij}=\\sigma\\bigl(W(x_j-x_i)\\bigr)", v:"learnable per-edge velocity (Eq.10)" },
   ];
+  const Kx = window.InlineKatex;
   return (
     <div style={{marginTop:18, display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10}}>
       {items.map((x,i)=>(
         <div key={i} style={{background:"#fffdf7", border:"1px solid #e3ddd2", borderRadius:8, padding:"12px 14px"}}>
-          <div className="serif" style={{fontSize:22, fontWeight:600, color:"#1b1a18"}}>{x.k}</div>
-          <div style={{fontSize:11.5, color:"#827d75"}}>{x.v}</div>
+          {x.tex ? (
+            <div style={{fontSize:18, color:"#1b1a18", display:"flex", alignItems:"center", minHeight:30}}>
+              {Kx ? <Kx tex={x.tex}/> : <span className="mono">{x.tex}</span>}
+            </div>
+          ) : (
+            <div className="serif" style={{fontSize:22, fontWeight:600, color:"#1b1a18"}}>{x.k}</div>
+          )}
+          <div style={{fontSize:11.5, color:"#827d75", marginTop: x.tex ? 4 : 0}}>{x.v}</div>
         </div>
       ))}
     </div>

@@ -459,15 +459,49 @@ function InlineMath({ text }) {
 // Featured chips — DGAC's was DE (狄利克雷能量); CDE's is Eq.10 (the velocity formula
 // — the entire paper's contribution in a single line)
 const FEATURED_CHIPS = new Set(["Eq10Velocity"]);
+// Warning chips — paper-vs-code discrepancies / typos / "be careful" notes
+// rendered with an orange ⚠ style so readers don't miss the gotcha
+const WARNING_CHIPS = new Set(["AppendixBTypo"]);
+// Code-only chips — engineering details surfaced from official code, not in paper.
+// Rendered with a subtle 📌 prefix in a slightly different palette.
+const CODE_CHIPS    = new Set(["AlphaBetaResidual","OutputLowHigh","EdgeAttention1"]);
 
 function SymChip({ id, onOpen }) {
   const e = GLOSSARY[id]; if (!e) return null;
   const featured = FEATURED_CHIPS.has(id);
-  const baseBg     = featured ? "oklch(0.93 0.08 75)" : "#faf7f1";
-  const baseBorder = featured ? "oklch(0.70 0.14 70)" : "#e3ddd2";
-  const hoverBg    = featured ? "oklch(0.96 0.1 75)"  : "#fff";
-  const hoverBord  = featured ? "oklch(0.55 0.16 65)" : "#c8c1b4";
-  const labelColor = featured ? "oklch(0.42 0.12 65)" : "#827d75";
+  const warning  = WARNING_CHIPS.has(id);
+  const codeOnly = CODE_CHIPS.has(id);
+  // Palette per chip kind
+  let baseBg = "#faf7f1", baseBorder = "#e3ddd2",
+      hoverBg = "#fff", hoverBord = "#c8c1b4",
+      labelColor = "#827d75",
+      symColor = "#1b1a18", textColor = "#3d3a35",
+      prefix = null, prefixColor = null,
+      shadow = "none", weight = 400, titleSuffix = "";
+  if (featured) {
+    baseBg = "oklch(0.93 0.08 75)"; baseBorder = "oklch(0.70 0.14 70)";
+    hoverBg = "oklch(0.96 0.1 75)"; hoverBord = "oklch(0.55 0.16 65)";
+    labelColor = "oklch(0.42 0.12 65)"; textColor = "oklch(0.3 0.08 65)";
+    symColor = "oklch(0.25 0.1 65)";
+    prefix = "★"; prefixColor = "oklch(0.55 0.16 65)";
+    shadow = "0 0 0 1px oklch(0.85 0.08 75 / 0.5)";
+    weight = 600; titleSuffix = "（核心公式）";
+  } else if (warning) {
+    baseBg = "oklch(0.95 0.07 35)"; baseBorder = "oklch(0.65 0.16 35)";
+    hoverBg = "oklch(0.97 0.09 35)"; hoverBord = "oklch(0.50 0.18 30)";
+    labelColor = "oklch(0.40 0.13 30)"; textColor = "oklch(0.30 0.10 30)";
+    symColor = "oklch(0.25 0.12 30)";
+    prefix = "⚠"; prefixColor = "oklch(0.55 0.18 30)";
+    shadow = "0 0 0 1px oklch(0.85 0.08 35 / 0.5)";
+    weight = 600; titleSuffix = "（paper 注解）";
+  } else if (codeOnly) {
+    baseBg = "oklch(0.96 0.04 250)"; baseBorder = "oklch(0.72 0.10 245)";
+    hoverBg = "oklch(0.98 0.06 250)"; hoverBord = "oklch(0.55 0.14 245)";
+    labelColor = "oklch(0.42 0.10 245)"; textColor = "oklch(0.30 0.10 245)";
+    symColor = "oklch(0.25 0.12 245)";
+    prefix = "📌"; prefixColor = null;
+    weight = 500; titleSuffix = "（code 工程细节）";
+  }
   return (
     <button
       onClick={ev=>{ ev.stopPropagation(); onOpen(id, ev.currentTarget); }}
@@ -478,17 +512,19 @@ function SymChip({ id, onOpen }) {
         border: `1px solid ${baseBorder}`,
         borderRadius:14, cursor:"pointer",
         fontFamily:"'Inter',sans-serif", fontSize:11,
-        color: featured ? "oklch(0.3 0.08 65)" : "#3d3a35",
+        color: textColor,
         transition:"background .15s, border-color .15s",
-        fontWeight: featured ? 600 : 400,
-        boxShadow: featured ? "0 0 0 1px oklch(0.85 0.08 75 / 0.5)" : "none",
+        fontWeight: weight,
+        boxShadow: shadow,
       }}
       onMouseEnter={ev=>{ ev.currentTarget.style.background=hoverBg; ev.currentTarget.style.borderColor=hoverBord; }}
       onMouseLeave={ev=>{ ev.currentTarget.style.background=baseBg; ev.currentTarget.style.borderColor=baseBorder; }}
-      title={featured ? `★ ${e.name}（核心公式）` : e.name}
+      title={`${prefix?prefix+' ':''}${e.name}${titleSuffix}`}
     >
-      {featured && <span style={{fontSize:10, color:"oklch(0.55 0.16 65)", marginRight:-2}}>★</span>}
-      <span style={{fontSize:13.5, color: featured ? "oklch(0.25 0.1 65)" : "#1b1a18"}}><Katex tex={e.tex}/></span>
+      {prefix && (
+        <span style={{fontSize:10, color: prefixColor||"inherit", marginRight:-2}}>{prefix}</span>
+      )}
+      <span style={{fontSize:13.5, color: symColor}}><Katex tex={e.tex}/></span>
       <span style={{color: labelColor}}>{e.name.split(" · ")[0]}</span>
     </button>
   );

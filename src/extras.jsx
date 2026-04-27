@@ -364,3 +364,4 @@ function LossBreakdown({ active, tick, cde, tIdx, tweaks }) {
 window.LossBreakdown = LossBreakdown;
 window.CDETrainingDynamics = CDETrainingDynamics;
 window.CDEFigure1 = CDEFigure1;
+window.InlineKatex = InlineKatex;
