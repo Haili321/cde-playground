@@ -96,6 +96,16 @@ cde-playground/
     └── cde_math.js     # Toy V_ij = σ(W(x_j−x_i)) + Euler ODE solve
 ```
 
+## Deep reading notes ★
+
+[**`DEEP_READING_NOTES.md`**](DEEP_READING_NOTES.md) — paper-vs-code 差异完整笔记。读完 14 页 paper + 通读 23 个 official source 文件后整理的 18 项「**paper 没明说但 code 里有**」的细节，包括：
+- ⚠️ **EarlyStopPath**：paper Table 2 不是 X(T) endpoint ACC，而是 t∈[0, 3T] 路径上 val-best 时刻的 ACC（默认启用 + 双层 best）
+- ⚠️ **频谱解耦**：扩散 → W_low、对流 → W_high 的双路径架构（paper 完全没写）
+- ⚠️ **Appendix B vs 主文 Eq.9 矛盾**（code 决定主文对）
+- 其他 15 项工程细节
+
+playground 把 5 个最关键的发现做成了 ⚠/📌 chip popover；完整 18 项见上面文档。
+
 ## About CDE
 
 CDE proposes incorporating the convection-diffusion PDE into GNN message passing.
