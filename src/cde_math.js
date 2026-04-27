@@ -413,15 +413,21 @@
     return dX;
   }
 
-  function eulerStep(X, adj, kappa, useConv, W, tau){
+  // GRAND-style residual ODE function (paper Table 8 hetero presets use add_source=True):
+  //   f(X) = α·(diff + conv) + β·X(0)
+  // α/β are learnable in the paper; here we use small fixed scalars matching the
+  // typical sigmoid(α_train)≈0.5, β_train≈0.1 region after training.
+  function eulerStep(X, adj, kappa, useConv, W, tau, X0, alphaScale=1.0, betaScale=0.0){
     const dDiff = diffusionContrib(X, adj, kappa);
     const dConv = useConv ? convectionContrib(X, adj, W) : null;
     const N = X.length, r = X[0].length;
+    const useSrc = (betaScale > 0) && X0;
     const out = X.map((row,i) => {
       const newRow = new Array(r);
       for (let k=0;k<r;k++){
         const c = (dConv ? dConv[i][k] : 0);
-        newRow[k] = row[k] + tau*(dDiff[i][k] + c);
+        const srcRow = useSrc ? X0[i][k] : 0;
+        newRow[k] = row[k] + tau*(alphaScale*(dDiff[i][k] + c) + betaScale*srcRow);
       }
       return newRow;
     });
@@ -429,13 +435,16 @@
   }
 
   // Run Euler integration; return [X(0), X(τ), X(2τ), …, X(Tsteps·τ)]
+  // alphaScale: learnable α from paper (here fixed at 1.0)
+  // betaScale: learnable β for source term β·X(0) (paper Table 8 hetero: usually >0)
   function runEuler(X0, edges, opts){
-    const { tau=0.25, steps=20, kappa=1.0, useConv=true, W=null } = opts || {};
+    const { tau=0.25, steps=20, kappa=1.0, useConv=true, W=null,
+            alphaScale=1.0, betaScale=0.0 } = opts || {};
     const adj = adjList(X0.length, edges);
     const traj = [X0];
     let X = X0;
     for (let s=0; s<steps; s++){
-      X = eulerStep(X, adj, kappa, useConv, W, tau);
+      X = eulerStep(X, adj, kappa, useConv, W, tau, X0, alphaScale, betaScale);
       traj.push(X);
     }
     return traj;

@@ -258,14 +258,14 @@ const GLOSSARY = {
     tex:"\\text{Eq.9}",
     name:"对流项展开",
     formula:"(\\mathrm{div}(V(t)\\odot X(t)))_i = \\textstyle\\sum_{j:(i,j)\\in E}V_{ij}(t)\\odot x_j(t)",
-    desc:"论文 Eq.9 —— 对流项在节点 $i$ 处的展开式。\n直接读：节点 $i$ 收到的「对流贡献」是其所有邻居特征 $x_j$ 与对应边速度 $V_{ij}$ 的逐元素积之和。\n对比扩散项：$\\sum_j D_{ij}(x_j-x_i)$（特征差求和）vs $\\sum_j V_{ij}\\odot x_j$（特征本身加权和）。\n后者让信息可以「逆梯度」流动 —— 异质边上 $V_{ij}$ 大，可以反向重定向。",
+    desc:"论文 Eq.9 —— 对流项在节点 $i$ 处的展开式。\n直接读：节点 $i$ 收到的「对流贡献」是其所有邻居特征 $x_j$ 与对应边速度 $V_{ij}$ 的逐元素积之和。\n对比扩散项：$\\sum_j D_{ij}(x_j-x_i)$（特征差求和）vs $\\sum_j V_{ij}\\odot x_j$（特征本身加权和）。\n后者让信息可以「逆梯度」流动 —— 异质边上 $V_{ij}$ 大，可以反向重定向。\n⚠️ 论文 Appendix B 把这里写成 $V_{ij}\\odot x_i$（⊙ 自己），与主文 Eq.9 矛盾 —— 经查官方 code（function_laplacian_convection.py 第 81-82 行注释明示「v_ij elementwise product with x_j」），主文 Eq.9 是对的，Appendix B 是 typo。",
     role:"对流离散（Eq.9）"
   },
   "Eq10Velocity": {
     tex:"\\text{Eq.10}\\,\\bigstar",
     name:"速度的 learnable 公式 ★★",
     formula:"V_{ij}(t) = \\sigma\\bigl(W\\,(x_j(t) - x_i(t))\\bigr)",
-    desc:"论文 Eq.10 —— CDE 全文最核心一公式，整个 method 浓缩成这一行。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数（论文用 $\\tanh$）。\n直觉解读：\n  · 同质邻居（$x_j\\approx x_i$）→ $V_{ij}\\approx 0$ → 退化纯扩散\n  · 异质邻居（$x_j\\neq x_i$）→ $V_{ij}$ 显著 → 对流主导\n  · $W$ 和 $\\sigma$ 让 $V$ 方向不必与 $x_j-x_i$ 同向 —— 模型自己学「该往哪流」\n参数效率：用 $r^2$ 个参数（$W$ 的规模）就能控制 $|E|$ 条边的速度；不需要每条边独立参数化。\nplayground 用 random Gaussian $W$ 作 toy seed；论文是端到端从分类 loss 反传梯度学出。",
+    desc:"论文 Eq.10 —— CDE 全文最核心一公式，整个 method 浓缩成这一行。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数。\n直觉解读：\n  · 同质邻居（$x_j\\approx x_i$）→ $V_{ij}\\approx 0$ → 退化纯扩散\n  · 异质邻居（$x_j\\neq x_i$）→ $V_{ij}$ 显著 → 对流主导\n  · $W$ 和 $\\sigma$ 让 $V$ 方向不必与 $x_j-x_i$ 同向 —— 模型自己学「该往哪流」\n参数效率：$W$ 只 $r^2$ 个参数就能控制 $|E|$ 条边的速度，不需要每边独立参数化。\n📌 Code 实际 vs Paper：\n  · Paper Eq.10 写一般 $\\sigma$；官方 code 实际是 $\\mathrm{ReLU}$（4 个 convection 文件统一）\n  · Code 写 $\\mathrm{ReLU}(W(x_i-x_j))$（方向反），但 $W$ 可学，效果等价于 paper 写法\n  · LapConv code 还多了个标量门控 $a_{ij}=\\tanh(\\mathrm{gate}([x_i\\|x_j]))$ 乘在 $V_{ij}\\odot x_j$ 之前（paper 没明写）\nplayground 用 random Gaussian $W$ + $\\sigma=\\tanh$ 作 toy seed；论文是端到端从分类 loss 反传梯度学。",
     role:"CDE 灵魂（Eq.10 ★★）"
   },
   "Eq11AttnTRANS": {
@@ -318,6 +318,39 @@ const GLOSSARY = {
     formula:"",
     desc:"论文 Algorithm 1（4 行）：\n  1. raw 输入特征经 MLP 压缩 → $X(0)$\n  2. ODE solver 求解 Eq.8 → 得到 $X(t)$ for $t\\in[0,T]$\n  3. 取终态 $X(T)$\n  4. 通过分类头做节点分类（cross-entropy loss）\n训练：所有可学习参数（MLP、$W$ in Eq.10、attention 参数）端到端联合优化。",
     role:"算法"
+  },
+
+  // ─── Code-only 细节层 · paper 没明写但 code 里有的工程设计 ───────
+  "AlphaBetaResidual": {
+    tex:"\\alpha,\\,\\beta",
+    name:"GRAND-style 残差 ODE · Residual ODE function",
+    formula:"f(X) = \\alpha\\,(\\,\\mathrm{ax}-X\\,) + \\beta\\,X(0)",
+    desc:"论文主文没明写，但官方 code 里 ODE function 不是直接 $dX/dt = \\mathrm{ax}$，而是 GRAND 风格的残差：\n  · $\\alpha = \\mathrm{sigmoid}(\\alpha_{\\mathrm{train}})$ —— 可学习标量，控制扩散+对流的整体步长\n  · $\\beta\\,X(0)$ —— optional source term，把初始态 $X(0)$ 作为持续注入项（防止 $X(t)$ 远离原始特征过远）\nCode (function_*_convection.py)：\n```\nf = alpha * (ax - x)\nif add_source:\n    f += beta_train * x_0\n```\n论文 Table 8 显示 hetero datasets 大部分启用 `add_source=True` —— 暗示这个残差项对异质性能贡献显著。",
+    role:"ODE function 工程细节"
+  },
+
+  "OutputLowHigh": {
+    tex:"W_{\\mathrm{low}},\\,W_{\\mathrm{high}}",
+    name:"频谱解耦 · Spectral path split",
+    formula:"\\mathrm{ax} = (\\,\\lambda_1\\cdot\\mathrm{ax}_{\\mathrm{conv}}\\,W_{\\mathrm{high}}\\,) + (\\,\\mathrm{ax}_{\\mathrm{diff}}\\,W_{\\mathrm{low}}\\,)",
+    desc:"📌 论文完全没提，但 code 里**核心**的设计：扩散贡献和对流贡献走两条独立的输出投影路径。\n  · 扩散贡献 $\\mathrm{ax}_{\\mathrm{diff}}$ → $W_{\\mathrm{low}}$ 矩阵（保留低频）\n  · 对流贡献 $\\mathrm{ax}_{\\mathrm{conv}}$ → $W_{\\mathrm{high}}$ 矩阵（放大高频）\n  · GAT/Trans Conv 还多一个可学习标量 $\\lambda_1$ 控制对流整体强度（LapConv 没有）\n频谱视角：heat diffusion 是低通滤波器（让所有节点趋同），CDE 加的对流项相当于高通滤波器（保留差异）。两条路径独立学习能让模型自适应平衡同质与异质信号。\n这是为什么 CDE 能在完全同质的图上也不严重降低性能（论文 Sec. 5.3 提到 Cora/Pubmed 上 CDE-GRAND 与 GRAND 相当）：$W_{\\mathrm{high}}$ 可以学到接近零，让对流贡献不干扰扩散。",
+    role:"频谱解耦"
+  },
+
+  "EdgeAttention1": {
+    tex:"a_{ij}",
+    name:"边标量门控 · Edge-scalar gate",
+    formula:"a_{ij} = \\tanh\\bigl(\\,\\mathrm{gate}([x_i\\,\\|\\,x_j])\\,\\bigr)",
+    desc:"📌 LapConv 独有，paper 没写：除 $V_{ij}\\in\\mathbb R^r$ 外，每条边还多一个标量门控 $a_{ij}\\in\\mathbb R$。\nCode (function_laplacian_convection.py 第 79-80 行)：\n```\nh2 = torch.cat([src, dst_k], dim=1)\nattention1 = torch.tanh(self.gate(h2)).squeeze()\n```\n实际对流贡献变成 $\\sum_{j\\in N(i)} a_{ij}\\cdot V_{ij}\\odot x_j$ 而非简单的 $\\sum V_{ij}\\odot x_j$。\n直觉：$a_{ij}$ 是 GAT-like 标量 attention，作用是「这条边到底在 convection 里要不要算」。如果 gate 学到把某些边的 $a_{ij}$ 推到 $\\pm 0$，等同于关掉这条边的 convection 贡献。\nGAT-Conv 和 Trans-Conv 不用这个，它们用各自 attention layer 的输出做扩散项 attention（不是对流门控）。",
+    role:"工程细节（LapConv）"
+  },
+
+  "AppendixBTypo": {
+    tex:"\\text{App.B}",
+    name:"Appendix B 的 typo 警告",
+    formula:"",
+    desc:"⚠️ 阅读论文时容易踩的坑：\n论文主文 Eq.9：$(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（⊙ $x_j$）\nAppendix B 写：$\\partial_t x_i = \\sum a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$（⊙ $x_i$）\n并配文字「we dot product this flow with $x_i$」。\n两者矛盾。哪个是对的？\n→ 看 code：`x_new = F.relu(W(x_i-x_j)) * dst_k`，且代码注释明示「v_ij elementwise product with $x_j$ in the paper」。\n→ 主文 Eq.9 是对的；**Appendix B 是 typo**（多处「x_i」应该是「x_j」）。\nplayground 按主文 Eq.9 实现。这是阅读 paper 时容易困惑的细节。",
+    role:"Paper 注解"
   },
 };
 
@@ -372,6 +405,12 @@ const RELATED = {
   ODESolverEuler:     ["Xt","tau","Tint"],
   ODESolverRK4:       ["Xt","tau"],
   Algorithm1:         ["Xt","Tint","Vij","Wmatrix","yu"],
+
+  // Code-only 工程细节层
+  AlphaBetaResidual:  ["Xt","Algorithm1","Eq8CDEGraph"],
+  OutputLowHigh:      ["Eq8CDEGraph","Eq9Conv","Eq10Velocity"],
+  EdgeAttention1:     ["xi","Vij","Eq9Conv"],
+  AppendixBTypo:      ["Eq9Conv","Eq10Velocity","Vij"],
 };
 
 // ---- KaTeX renderer ---------------------------------------------------
@@ -777,7 +816,7 @@ function FormulaPanel({ step, tweaks }) {
 
       {/* step 4: attribute — 图对流项（CDE 核心 ★） */}
       <Block active={id==="convection"} color={A_CONV} eyebrow="图上的对流项 · CONVECTION ★"
-        onOpen={open} syms={["Eq8CDEGraph","Eq9Conv","Vij","Vmatrix","hadamard","divX"]}
+        onOpen={open} syms={["Eq8CDEGraph","Eq9Conv","Vij","Vmatrix","hadamard","divX","EdgeAttention1","AppendixBTypo"]}
         note="CDE 在 GRAND 之上加的全部贡献。每条边 (i,j) 配速度向量 V_ij ∈ ℝ^r；节点的对流贡献 = 邻居特征与边速度的逐元素积之和。">
         <Eq hl={id==="convection"}
           tex="\frac{\partial X}{\partial t}=\underbrace{\mathrm{div}(D\odot\nabla X)}_{\text{diffusion}}+\underbrace{\mathrm{div}(V\odot X)}_{\text{convection}}\;\;\text{(Eq.8)}"/>
@@ -787,7 +826,7 @@ function FormulaPanel({ step, tweaks }) {
 
       {/* step 5: fusion — Velocity learnable formula (Eq.10 ★★) */}
       <Block active={id==="velocity"} color={A_VEL} eyebrow="Velocity 公式 · VELOCITY (Eq.10) ★★"
-        onOpen={open} syms={["Eq10Velocity","Vij","sigma","Wmatrix","xi","gradX"]}
+        onOpen={open} syms={["Eq10Velocity","Vij","sigma","Wmatrix","xi","gradX","OutputLowHigh"]}
         note="全文最重要一公式：速度由特征差驱动。同质邻居 → V≈0 → 退回纯扩散；异质邻居 → V 显著 → 对流主导。W 和 σ 让模型自己学「该往哪流」。">
         <Eq hl={id==="velocity"}
           tex="V_{ij}(t)=\sigma\bigl(W\,(x_j(t)-x_i(t))\bigr)\;\;\text{(Eq.10)}"/>
@@ -795,7 +834,7 @@ function FormulaPanel({ step, tweaks }) {
 
       {/* step 6: kmeans — ODE solver */}
       <Block active={id==="ode"} color={A_OUT} eyebrow="ODE 求解 · ODE SOLVER"
-        onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt"]}
+        onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt","AlphaBetaResidual"]}
         note={`论文 T=1.0 已饱和，T=5.0 反而下降。RK4 在 Minesweeper 上比 Euler 显著好（Table 3：93.05 vs 87.13）。当前积分时间 T = ${tweaks.alpha.toFixed(2)}（playground 用 alpha 滑块代理）。`}>
         <Eq hl={id==="ode"}
           tex="X(t+\tau)=X(t)+\tau\,f(X(t)),\quad f(X)=\mathrm{div}(D\odot\nabla X)+\mathrm{div}(V\odot X)"/>
