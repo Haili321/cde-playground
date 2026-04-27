@@ -881,19 +881,21 @@ function FormulaPanel({ step, tweaks }) {
       {/* step 7: cprop — 节点分类输出 */}
       <Block active={id==="classify"} color={A_OUT} eyebrow="分类输出 · CLASSIFY"
         onOpen={open} syms={["Algorithm1","Xt","Tint","yu"]}
-        note="Algorithm 1 step 3-4：取 ODE 解的终态 X(T) 通过 MLP 分类头得到节点类别预测，标准 cross-entropy loss 端到端训练。">
+        note="Algorithm 1 step 3-4：取 ODE 解的终态 X(T) → MLP 分类头 → 半监督 cross-entropy 损失（仅在训练节点上累加）。所有可学参数（input MLP、ODE 内部 W/α/β、分类头）端到端联合优化。">
         <Eq hl={id==="classify"}
-          tex="\hat y_i=\arg\max_{c}\,\mathrm{MLP}(x_i(T))_c"/>
+          tex="p_{i,c}=\mathrm{softmax}(\mathrm{MLP}(x_i(T)))_c,\quad \hat y_i=\arg\max_c\,p_{i,c}"/>
+        <Eq hl={id==="classify"}
+          tex="\mathcal L = -\sum_{i\in V_{\mathrm{train}}}\log p_{i,\,y_i}\quad\text{(半监督 cross-entropy)}"/>
       </Block>
 
       {/* step 8: loss — 异质 benchmark 表现 */}
       <Block active={id==="benchmark"} color={A_LOSS} eyebrow="异质图 · BENCHMARK"
         onOpen={open} syms={["hedge","hadj","yu","E"]}
-        note="CDE-GRAND 在 9 个异质 benchmark 全部 SOTA 或并列。h_adj 越低改进越大：Roman-empire +20%，Minesweeper +19%，Wiki-cooc +6%（论文 Table 2）。">
+        note="先用 h_edge / h_adj 量化「异质性多强」（下方两式），再看 paper Table 2：在 h_adj 越低（异质性越强）的数据集上，CDE-GRAND 改进越大 — Roman-empire (h_adj=−0.05) +20pp, Minesweeper (0.01) +19pp, Wiki-cooc (−0.03) +6pp。详细 ACC 表与 Figure 1 复现见下方训练动力学面板 →">
         <Eq hl={id==="benchmark"}
-          tex="h_{\mathrm{edge}}=\frac{|\{(u,v)\in E\,:\,y_u=y_v\}|}{|E|}\;\;\text{(Eq.6)}"/>
+          tex="h_{\mathrm{edge}}=\frac{|\{(u,v)\in E\,:\,y_u=y_v\}|}{|E|}\;\;\text{(Eq.6, Def.1)}"/>
         <Eq hl={id==="benchmark"}
-          tex="h_{\mathrm{adj}}=\frac{h_{\mathrm{edge}}-\sum_k D_k^2/(2|E|)^2}{1-\sum_k D_k^2/(2|E|)^2}\;\;\text{(Eq.7)}"/>
+          tex="h_{\mathrm{adj}}=\frac{h_{\mathrm{edge}}-\sum_k D_k^2/(2|E|)^2}{1-\sum_k D_k^2/(2|E|)^2}\;\;\text{(Eq.7, Def.2 — Platonov 2022)}"/>
       </Block>
 
       {/* step 9: output — Plug-in 哲学 */}

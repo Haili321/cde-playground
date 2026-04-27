@@ -28,7 +28,7 @@ const STEPS = [
   {
     id: "diffusion",
     title: "图上的扩散项 · GRAND 形式",
-    subtitle: "(div(D⊙∇X))_i = Σ_{j∈N(i)} A_{ij}(x_j − x_i)   [Eq.3-5]",
+    subtitle: "Eq.5: dX/dt = (A(X)−I)X  ↔  Σ_{j∈N(i)} A_{ij}(x_j−x_i)  (展开形式)",
     active: ["s-enc", "top-diff"],
     formula: "topology",
     desc: "论文 Eq.3-5 — 把连续 PDE 在图上离散：边上的梯度 (∇X)_{ij} = x_j − x_i，节点上的散度 (div X)_i = Σ_{j∈N(i)} X_{ij}。代入热方程得 dX/dt = (A(X)−I)X，其中 A 可以是 GRAND-LAP（常量）/ GRAND-GAT / GRAND-TRANS / GraphBel 等几种 attention 选择 —— 这就是已有的扩散类 GNN（GRAND, GraphBel）。",
@@ -39,7 +39,7 @@ const STEPS = [
     subtitle: "(div(V⊙X))_i = Σ_{j∈N(i)} V_{ij} ⊙ x_j   [Eq.9]",
     active: ["a-enc", "attr-diff"],
     formula: "attribute",
-    desc: "论文 Eq.8-9 — CDE 在 GRAND 之上加的全部贡献。每条边 (i,j) 配一个**速度向量** V_{ij} ∈ ℝ^r，节点的对流项是邻居特征和边速度向量的逐元素积之和。物理上 v 控制信息往哪流；图上它让节点能「逆梯度」接收信息，这是处理异质边的关键。",
+    desc: "论文 Eq.8-9 — CDE 在 GRAND 之上加的全部贡献。每条边 (i,j) 配一个「速度向量」V_{ij} ∈ ℝ^r，节点的对流项是邻居特征和边速度向量的逐元素积之和。物理上 v 控制信息往哪流；图上它让节点能「逆梯度」接收信息，这是处理异质边的关键。⚠️ 注意：论文 Appendix B 把这里写成 ⊙ x_i 与主文 Eq.9 矛盾 —— 看 code 注释 (function_laplacian_convection.py:81-82) 「v_ij elementwise product with x_j」，主文 Eq.9 是对的，Appendix B 是 typo。",
   },
   {
     id: "velocity",
@@ -47,7 +47,7 @@ const STEPS = [
     subtitle: "V_{ij} = σ(W (x_j − x_i))   [Eq.10 ★★]",
     active: ["top-diff", "attr-diff", "fusion"],
     formula: "fusion",
-    desc: "论文 Eq.10 — 全文最重要一公式。速度由特征差驱动：W 是可学习矩阵，σ 是激活函数。直觉：同质邻居 (x_j ≈ x_i) → V ≈ 0 → 退回纯扩散；异质邻居 (x_j ≠ x_i) → V 显著 → 对流主导。但 V 的方向不一定与 x_j − x_i 同向（W 和 σ 学出来的）—— 模型自己决定该让信息往哪流。",
+    desc: "论文 Eq.10 — 全文最重要一公式。速度由特征差驱动：W 是可学习矩阵，σ 是激活函数。直觉：同质邻居 (x_j ≈ x_i) → V ≈ 0 → 退回纯扩散；异质邻居 (x_j ≠ x_i) → V 显著 → 对流主导。但 V 的方向不一定与 x_j − x_i 同向（W 和 σ 学出来的）—— 模型自己决定该让信息往哪流。📌 Code 实际细节：σ 在官方 code 里是 ReLU（paper 没明说），且 code 用 (x_i−x_j) 而 paper 是 (x_j−x_i) —— W 可学等价。点 ★ Eq.10 chip 看完整对比。",
   },
   {
     id: "ode",
