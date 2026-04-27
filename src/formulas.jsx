@@ -352,6 +352,14 @@ const GLOSSARY = {
     desc:"⚠️ 阅读论文时容易踩的坑：\n论文主文 Eq.9：$(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（⊙ $x_j$）\nAppendix B 写：$\\partial_t x_i = \\sum a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$（⊙ $x_i$）\n并配文字「we dot product this flow with $x_i$」。\n两者矛盾。哪个是对的？\n→ 看 code：`x_new = F.relu(W(x_i-x_j)) * dst_k`，且代码注释明示「v_ij elementwise product with $x_j$ in the paper」。\n→ 主文 Eq.9 是对的；**Appendix B 是 typo**（多处「x_i」应该是「x_j」）。\nplayground 按主文 Eq.9 实现。这是阅读 paper 时容易困惑的细节。",
     role:"Paper 注解"
   },
+
+  "EarlyStopPath": {
+    tex:"\\mathrm{Path\\text{-}best}",
+    name:"⚠ 测试时路径选优 · Path-best test selection",
+    formula:"\\hat y = f_{\\mathrm{cls}}\\bigl(X(t^{*})\\bigr),\\quad t^{*}=\\arg\\max_{t\\in[0,\\,3T]}\\;\\mathrm{ValAcc}(X(t))",
+    desc:"⚠️ 这是 paper Sec. 5 完全没明说但 code 默认启用的「隐藏技巧」，对解读 Table 2 的 +20% 数字至关重要。\n📌 三层细节（来自 early_stop_solver.py + run_GNN_raw.py 第 167 行）：\n  ① 默认启用：`run_GNN_raw.py:167` 的 `model = GNNhe if no_early else GNNheter` —— 默认走 GNNheter（带 EarlyStopInt）；要关掉得显式 `--no_early`\n  ② 测试时 ODE 跑 3T 不是 T：`EarlyStopInt.t = [0, earlystopxT * T]`，`earlystopxT` 默认 3.0（line 291）。训练时 T=1.0，测试时 ODE 实际跑到 t=3.0，从更长路径上选\n  ③ 双层 best：`run_GNN_raw.py:201-206` —— epoch best vs ODE-path best 取较大值。前者跨 epoch 选最佳，后者单次 ODE forward 内跨 t 选最佳\n所以 paper Table 2 的 ACC 不是「X(T) endpoint 分类准确率」，而是「t∈[0, 3T] 路径上 val-best 时刻 t* 的 X(t*) 分类准确率」。\n这是合法的 model selection（用 val_mask 不是 test_mask 选 t*），但 paper 主文 Algorithm 1 写「step 3: return X(T)」误导读者以为是 endpoint。\n📌 Hetero datasets 的 best_params 没明确设 earlystopxT，意味着用默认 3.0；homo datasets（如 Pubmed）显式设 5.0。\nplayground 没实现这个机制（toy 太小不需要），但 popover 应让读者意识到 paper 数字的实际含义。",
+    role:"Paper 隐藏技巧"
+  },
 };
 
 // ─── RELATED · only symbols literally in each entry's Definition formula ──
@@ -411,6 +419,7 @@ const RELATED = {
   OutputLowHigh:      ["Eq8CDEGraph","Eq9Conv","Eq10Velocity"],
   EdgeAttention1:     ["xi","Vij","Eq9Conv"],
   AppendixBTypo:      ["Eq9Conv","Eq10Velocity","Vij"],
+  EarlyStopPath:      ["Xt","Tint","Algorithm1","yu"],
 };
 
 // ---- KaTeX renderer ---------------------------------------------------
@@ -461,7 +470,7 @@ function InlineMath({ text }) {
 const FEATURED_CHIPS = new Set(["Eq10Velocity"]);
 // Warning chips — paper-vs-code discrepancies / typos / "be careful" notes
 // rendered with an orange ⚠ style so readers don't miss the gotcha
-const WARNING_CHIPS = new Set(["AppendixBTypo"]);
+const WARNING_CHIPS = new Set(["AppendixBTypo", "EarlyStopPath"]);
 // Code-only chips — engineering details surfaced from official code, not in paper.
 // Rendered with a subtle 📌 prefix in a slightly different palette.
 const CODE_CHIPS    = new Set(["AlphaBetaResidual","OutputLowHigh","EdgeAttention1"]);
@@ -870,7 +879,7 @@ function FormulaPanel({ step, tweaks }) {
 
       {/* step 6: kmeans — ODE solver */}
       <Block active={id==="ode"} color={A_OUT} eyebrow="ODE 求解 · ODE SOLVER"
-        onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt","AlphaBetaResidual"]}
+        onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt","AlphaBetaResidual","EarlyStopPath"]}
         note={`论文 T=1.0 已饱和，T=5.0 反而下降。RK4 在 Minesweeper 上比 Euler 显著好（Table 3：93.05 vs 87.13）。当前积分时间 T = ${tweaks.alpha.toFixed(2)}（playground 用 alpha 滑块代理）。`}>
         <Eq hl={id==="ode"}
           tex="X(t+\tau)=X(t)+\tau\,f(X(t)),\quad f(X)=\mathrm{div}(D\odot\nabla X)+\mathrm{div}(V\odot X)"/>
@@ -890,7 +899,7 @@ function FormulaPanel({ step, tweaks }) {
 
       {/* step 8: loss — 异质 benchmark 表现 */}
       <Block active={id==="benchmark"} color={A_LOSS} eyebrow="异质图 · BENCHMARK"
-        onOpen={open} syms={["hedge","hadj","yu","E"]}
+        onOpen={open} syms={["hedge","hadj","yu","E","EarlyStopPath"]}
         note="先用 h_edge / h_adj 量化「异质性多强」（下方两式），再看 paper Table 2：在 h_adj 越低（异质性越强）的数据集上，CDE-GRAND 改进越大 — Roman-empire (h_adj=−0.05) +20pp, Minesweeper (0.01) +19pp, Wiki-cooc (−0.03) +6pp。详细 ACC 表与 Figure 1 复现见下方训练动力学面板 →">
         <Eq hl={id==="benchmark"}
           tex="h_{\mathrm{edge}}=\frac{|\{(u,v)\in E\,:\,y_u=y_v\}|}{|E|}\;\;\text{(Eq.6, Def.1)}"/>
