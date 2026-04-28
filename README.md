@@ -38,19 +38,22 @@ On the **Roman-empire** dataset (h_adj = −0.05, the most heterophilic of all):
 | **CDE-GRAND** (heat + convection) | **91.6%** |
 | improvement | **+20.0%** |
 
-Adding the convection term costs only ~10% extra training time and ~1% extra inference —
-nearly free for the gain. The same plug-in works on Wiki-cooc (+6%), Minesweeper (+19%),
-Texas (+6%), and 5 other heterophilic benchmarks.
+Adding the convection term costs ~10% extra training time and ~1% extra inference
+(paper Table 5 + line 1208-1209) — an acceptable trade-off (paper line 1209-1211).
+CDE-GRAND achieves the **best** performance on the three most heterophilic benchmarks
+— Wiki-cooc (+6%), Roman-empire (+20%), Minesweeper (+19%) — and performs **comparably
+to SOTA** on the others (paper Sec. 5.2, line 845-862). Note: on Amazon-ratings, paper
+acknowledges all heterophily-specific models — including CDE — fall behind GraphSAGE.
 
 ## Features
 
 - 🌊 **Dual-panel time theatre** — heat-only vs CDE on the same graph,
   with a continuous time scrubber `t ∈ [0, T]`
-- 🧭 **8-step scrubber** — physical intuition → graph discretisation → convection → solver → result
+- 🧭 **9-step scrubber** — input → intuition → diffusion → convection → velocity → ODE → classify → benchmark → plug-in
 - 📐 **Paper-faithful KaTeX** — every Eq. in the playground points to a paper Eq./Section
 - 🎛️ **Tweaks panel** — integration time `T`, step size `τ`, attention variant
   (GRAND-LAP / GAT / TRANS / GraphBel), heat vs CDE toggle
-- 🧠 **Velocity field viz** — per-node velocity arrows show learnt direction of information transport
+- 🧠 **Velocity field viz** — per-node velocity arrows show toy-seed direction of information transport (W is random-Gaussian seeded, not end-to-end trained as in the paper)
 - 📊 **Figure 1 reproduction** — interactive ACC vs h_edge curve
   (CDE vs GRAND vs GCN vs ACM-GCN)
 - 🧮 **Glossary popovers** — symbol clicks open accumulative explanation cards

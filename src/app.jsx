@@ -20,6 +20,49 @@ const LINE_XITION = {
   transition: `x1 0.6s ${SMOOTH_T}, y1 0.6s ${SMOOTH_T}, x2 0.6s ${SMOOTH_T}, y2 0.6s ${SMOOTH_T}, stroke 0.3s, stroke-width 0.3s, opacity 0.3s`,
 };
 
+// ==============================================================
+// MixedMath — renders text with $...$ tex segments interleaved.
+// Chinese text stays in normal font; math segments are KaTeX-rendered.
+// Uses renderToString + dangerouslySetInnerHTML so React fully owns
+// the DOM (no ref/innerHTML conflict that can trigger update loops).
+// ==============================================================
+function MixedMath({ text }) {
+  const parts = useMemo(() => {
+    const out = [];
+    const re = /\$([^$]+)\$/g;
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) out.push({ t: "txt", v: text.slice(last, m.index) });
+      out.push({ t: "tex", v: m[1] });
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) out.push({ t: "txt", v: text.slice(last) });
+    return out;
+  }, [text]);
+  return <>{parts.map((p, i) => p.t === "tex"
+    ? <KatexInline key={i} tex={p.v}/>
+    : <span key={i}>{p.v}</span>)}</>;
+}
+
+function KatexInline({ tex }) {
+  const html = useMemo(() => {
+    if (!window.katex) return null;
+    try {
+      return window.katex.renderToString(tex, {
+        throwOnError: false,
+        displayMode: false,
+        strict: "ignore",
+        output: "html",
+      });
+    } catch (e) {
+      console.warn("[KaTeX]", tex, e);
+      return null;
+    }
+  }, [tex]);
+  if (html == null) return <span style={{margin:"0 1px"}}>{tex}</span>;
+  return <span style={{margin:"0 1px"}} dangerouslySetInnerHTML={{__html: html}}/>;
+}
+
 
 // ==============================================================
 // CDETheatre — the playground's signature animation.
@@ -276,9 +319,13 @@ function Scrubber({ step, steps, idx, setIdx, playing, setPlaying }) {
           </span>
           {step.title}
         </span>
-        <span className="mono" style={{fontSize:12, color:"#827d75"}}>{step.subtitle}</span>
+        <span style={{fontSize:12.5, color:"#3d3a35", maxWidth:"60%", textAlign:"right"}}>
+          <MixedMath text={step.subtitle}/>
+        </span>
       </div>
-      <p style={{fontSize:13.5, lineHeight:1.7, color:"#3d3a35", margin:0}}>{step.desc}</p>
+      <p style={{fontSize:13.5, lineHeight:1.85, color:"#3d3a35", margin:0}}>
+        <MixedMath text={step.desc}/>
+      </p>
     </div>
   );
 }
@@ -315,8 +362,8 @@ function Header(){
 function BottomStrip() {
   const items = [
     { k:"+20%", v:"Roman-empire ACC vs GRAND" },
-    { k:"9/9", v:"异质 benchmark 全部 SOTA" },
-    { k:"~1%", v:"推理时间 vs GRAND（几乎免费）" },
+    { k:"3/9", v:"hetero datasets where CDE is best (line 845-846)" },
+    { k:"~1%", v:"推理时间增量 vs GRAND (line 1208-1211)" },
     { tex:"V_{ij}=\\sigma\\bigl(W(x_j-x_i)\\bigr)", v:"learnable per-edge velocity (Eq.10)" },
   ];
   const Kx = window.InlineKatex;

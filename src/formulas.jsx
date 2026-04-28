@@ -72,7 +72,7 @@ const GLOSSARY = {
     tex:"x_i(t)",
     name:"节点特征向量",
     formula:"x_i(t)\\in\\mathbb R^r",
-    desc:"节点 $i$ 在时间 $t$ 的特征向量，是 $X(t)$ 的第 $i$ 行（论文记作行向量 $\\mathbf x_i^\\top(t)$）。\n物理直觉：把 $x_i(t)$ 当成位置 $i$ 处某物理量（温度 / 浓度 / 染料）的分布；它随 PDE 演化。\n$x_i(t)$ 是图上 PDE $\\partial x/\\partial t = \\dots$ 的离散对应物。",
+    desc:"节点 $i$ 在时间 $t$ 的特征向量，是 $X(t)$ 的第 $i$ 行（论文记作行向量 $\\mathbf x_i^\\top(t)$）。\n论文 Sec. 3.1（line 220-221）海洋类比：可把 $x_i(t)$ 想成位置 $i$ 处的「热浓度」，随 PDE 演化。\n$x_i(t)$ 是图上 PDE $\\partial x/\\partial t = \\dots$ 的离散对应物。",
     role:"节点状态"
   },
   "partt": {
@@ -121,7 +121,7 @@ const GLOSSARY = {
     tex:"V_{ij}(t)",
     name:"边速度向量 · Per-edge velocity ★",
     formula:"V_{ij}(t)\\in\\mathbb R^r,\\quad V_{ij}(t)=\\sigma\\bigl(W(x_j(t)-x_i(t))\\bigr)",
-    desc:"CDE 的核心创新。每条边 $(i,j)$ 在时间 $t$ 配一个 $r$ 维速度向量。\n物理直觉：流体力学里 $\\mathbf v$ 是水流速度（携带物质流动）。CDE 让每条图边都有一个独立的「水流」方向。\n关键性质（Eq.10）：\n  · 同质邻居（$x_j\\approx x_i$）→ $V_{ij}\\approx 0$ → 退化到纯扩散\n  · 异质邻居（$x_j$ 远离 $x_i$）→ $V_{ij}$ 显著 → 对流主导\n  · $V$ 的方向不一定与 $x_j-x_i$ 同向（$W$ 和 $\\sigma$ 学出来的）—— 模型自己决定该让信息往哪流\n注意时间依赖：$V_{ij}(t)$ 每个 ODE step 都重新算（因为 $x_i, x_j$ 在变）。",
+    desc:"CDE 的核心创新。每条边 $(i,j)$ 在时间 $t$ 配一个 $r$ 维速度向量。\n物理类比（论文 Sec. 3.1 line 222-223）：流体力学里 $\\mathbf v$ 类似洋流，CDE 让每条图边都有一个独立的「水流」方向。\nPaper Sec. 4.1（line 366-372）原话解读：\n  · $V_{ij}$ 决定从邻居 $j$ 到节点 $i$ 的「优先信息输运方向」\n  · $V$ 不一定与 $x_j-x_i$ 同向（line 368-369：「the velocity is not always in the same direction as the difference」），因 $W$ 与 $\\sigma$ 都可学\n  · 这种灵活性正是异质图所需的（line 370-372）\n时间依赖：$V_{ij}(t)$ 每个 ODE step 都重新算（因为 $x_i, x_j$ 在变）。",
     role:"学习目标"
   },
   "Vmatrix": {
@@ -170,14 +170,14 @@ const GLOSSARY = {
     tex:"W",
     name:"可学习速度权重 · Velocity weight",
     formula:"W\\in\\mathbb R^{r\\times r}",
-    desc:"Eq.10 里的可学习矩阵。$V_{ij} = \\sigma(W(x_j - x_i))$。\n论文实现里 $W$ 用 PyTorch 的 `nn.Linear(r, r, bias=False)`。\n$W$ 是 CDE 在 baseline 之上唯一新增的可学习参数（除 $D$ 自己的参数外）—— 这就是 CDE 比 GRAND 只贵 ~10% 训练（论文 Table 5）的原因。\n物理意义：$W$ 决定特征差如何映射成速度方向。\nplayground 用 random Gaussian $W$ 作 toy seed（不真训练，物理形式严格但不是论文学到的最优）。",
+    desc:"Eq.10 里的可学习矩阵。$V_{ij} = \\sigma(W(x_j - x_i))$。\n论文实现里 $W$ 用 PyTorch 的 `nn.Linear(r, r, bias=False)`。\n$W$ 是 paper Eq.10 明确描述的可学习参数；code 里 CDE 在 baseline 之上还有更多额外参数（频谱解耦的 $W_{\\mathrm{low}}/W_{\\mathrm{high}}$、concat-linear 的 lin2、LapConv 的 gate 等 —— paper 没明写，见 OutputLowHigh / EdgeAttention1 chip）。CDE 比 GRAND 增加 ~10% 训练时间 / ~1% 推理时间（paper Table 5 + line 1208-1209）。\n物理意义：$W$ 决定特征差如何映射成速度方向。\nplayground 用 random Gaussian $W$ 作 toy seed（不真训练，物理形式严格但不是论文学到的最优）。",
     role:"可学习参数"
   },
   "Tint": {
     tex:"T",
     name:"积分时间 · Integration time",
     formula:"T\\in\\mathbb R^+",
-    desc:"ODE 积分到的目标时间（Algorithm 1）。\n相当于 GNN 的「层数」概念 —— 但 CDE 是连续 PDE，无显式 layer。每个 ODE step 算一次邻居聚合，所以 $T/\\tau$ 等效层数（$\\tau$ 是步长）。\n论文 Table 3 ablation：T=1.0 已基本饱和；T=5.0 反而下降（饱和 + over-smoothing）。",
+    desc:"ODE 积分到的目标时间（Algorithm 1）。\n相当于 GNN 的「层数」概念 —— 但 CDE 是连续 PDE，无显式 layer（Table 3 caption）。每个 ODE step 算一次邻居聚合，$T/\\tau$ 等效隐式层数（$\\tau$ 是步长）。\nTable 3 ablation（line 1112-1118）：随 $T$ 增大准确率提升直至「saturation point」，更大 $T$ 计算成本更高。Roman-empire (Euler) 在 $T=3$ 达 91.64% 峰值，Minesweeper (Euler) 在 $T=4$ 达 93.21% 峰值。",
     role:"超参（时间）"
   },
   "tau": {
@@ -216,7 +216,7 @@ const GLOSSARY = {
     tex:"\\text{Eq.1}",
     name:"热扩散方程（连续）· Heat equation",
     formula:"\\frac{\\partial x}{\\partial t} = \\mathrm{div}(D\\,\\nabla x),\\;\\;t>0",
-    desc:"论文 Eq.1 / 经典物理 —— 热量沿浓度梯度均匀扩散。\n$D$ 是 thermal diffusivity（介质决定）。\n核心物理：信息从高浓度区流向低浓度区，最终全场趋于均匀。\n图 GNN 视角：这就是 GCN/GRAND 的连续极限。$D=$ 邻接矩阵时退化为标准 graph Laplacian smoothing。\n问题：异质图上把不该融合的邻居信息也融合了 → over-smoothing → 性能崩盘 → 需要加对流项。",
+    desc:"论文 Eq.1 / 经典物理 —— 热量沿浓度梯度均匀扩散。\n$D$ 是 thermal diffusivity（介质决定）。\n核心物理：信息从高浓度区流向低浓度区，最终全场趋于均匀。\n图 GNN 视角：这就是 GCN/GRAND 的连续极限。$D=$ 邻接矩阵时退化为标准 graph Laplacian smoothing。\n问题（paper line 41-44 + 67-79）：异质图上把不该融合的邻居信息也融合了 → over-smoothing → 「fail to optimally utilize information in heterophilic graph datasets」→ 需要加对流项。",
     role:"基础 PDE（baseline）"
   },
   "Eq2CDE": {
@@ -265,7 +265,7 @@ const GLOSSARY = {
     tex:"\\text{Eq.10}\\,\\bigstar",
     name:"速度的 learnable 公式 ★★",
     formula:"V_{ij}(t) = \\sigma\\bigl(W\\,(x_j(t) - x_i(t))\\bigr)",
-    desc:"论文 Eq.10 —— CDE 全文最核心一公式，整个 method 浓缩成这一行。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数。\n直觉解读：\n  · 同质邻居（$x_j\\approx x_i$）→ $V_{ij}\\approx 0$ → 退化纯扩散\n  · 异质邻居（$x_j\\neq x_i$）→ $V_{ij}$ 显著 → 对流主导\n  · $W$ 和 $\\sigma$ 让 $V$ 方向不必与 $x_j-x_i$ 同向 —— 模型自己学「该往哪流」\n参数效率：$W$ 只 $r^2$ 个参数就能控制 $|E|$ 条边的速度，不需要每边独立参数化。\n📌 Code 实际 vs Paper：\n  · Paper Eq.10 写一般 $\\sigma$；官方 code 实际是 $\\mathrm{ReLU}$（4 个 convection 文件统一）\n  · Code 写 $\\mathrm{ReLU}(W(x_i-x_j))$（方向反），但 $W$ 可学，效果等价于 paper 写法\n  · LapConv code 还多了个标量门控 $a_{ij}=\\tanh(\\mathrm{gate}([x_i\\|x_j]))$ 乘在 $V_{ij}\\odot x_j$ 之前（paper 没明写）\nplayground 用 random Gaussian $W$ + $\\sigma=\\tanh$ 作 toy seed；论文是端到端从分类 loss 反传梯度学。",
+    desc:"论文 Eq.10（Sec. 4.1，line 361-372）—— CDE method 的核心定义，paper 称之为「simple yet effective velocity formulation」。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数。\nPaper 原话解读（line 366-372）：\n  · $V_{ij}$ 决定从邻居 $j$ 到节点 $i$ 的「优先信息输运方向」\n  · $V$ 不一定与 $x_j-x_i$ 同向（line 368-369：「the velocity is not always in the same direction as the difference」），因 $W$ 与 $\\sigma$ 都可学\n  · 这种灵活性正是异质图所需的（line 370-372）\n参数效率：$W$ 只 $r^2$ 个参数就能控制 $|E|$ 条边的速度，不需要每边独立参数化。\n📌 Code 实际 vs Paper：\n  · Paper Eq.10 写一般 $\\sigma$；官方 code 实际是 $\\mathrm{ReLU}$（4 个 convection 文件统一）\n  · Code 写 $\\mathrm{ReLU}(W(x_i-x_j))$（方向反），但 $W$ 可学，效果等价于 paper 写法\n  · LapConv code 还多了个标量门控 $a_{ij}=\\tanh(\\mathrm{gate}([x_i\\|x_j]))$ 乘在 $V_{ij}\\odot x_j$ 之前（paper 没明写）\nplayground 用 random Gaussian $W$ + $\\sigma=\\tanh$ 作 toy seed；论文是端到端从分类 loss 反传梯度学。",
     role:"CDE 灵魂（Eq.10 ★★）"
   },
   "Eq11AttnTRANS": {
@@ -288,14 +288,14 @@ const GLOSSARY = {
     tex:"\\text{Heat}",
     name:"热扩散（概念）",
     formula:"\\partial x/\\partial t = \\mathrm{div}(D\\nabla x)",
-    desc:"经典物理过程：浓度沿梯度均匀扩散，最终趋于平衡（一片均匀）。\n图 GNN 视角：信息在邻居间求平均 → 反复迭代 → 全图趋同。\n好处：在同质图上效果好（同类节点天然相似，平均后变得更相似）。\n坏处：异质图上把跨类节点也平均了 → 类边界模糊 → 分类崩盘。\nCDE 的诊断：纯 heat 方程不够，需要加对流项 $-\\mathrm{div}(\\mathbf v x)$。",
+    desc:"经典物理过程：浓度沿梯度均匀扩散，最终趋于平衡（一片均匀）。\n图 GNN 视角：信息在邻居间求平均 → 反复迭代 → 全图趋同。\n好处：在同质图上效果好（同类节点天然相似，平均后变得更相似）。\n坏处（paper line 41-44）：异质图上把跨类节点也平均了 → 类边界模糊 → 「fail to optimally utilize information」。\nCDE 的诊断：纯 heat 方程不够，需要加对流项 $-\\mathrm{div}(\\mathbf v x)$。",
     role:"baseline 物理"
   },
   "ConvectionDiffusion": {
     tex:"\\text{CDE}",
     name:"对流-扩散（概念）★",
     formula:"\\partial x/\\partial t = \\mathrm{div}(D\\nabla x) - \\mathrm{div}(\\mathbf v\\,x)",
-    desc:"经典流体力学 —— 流体里同时有扩散（浓度梯度驱动）和对流（速度场驱动）。\n海洋例子：温度 = 扩散（热传导）+ 对流（洋流携带）。\n气体例子：浓度 = 扩散（布朗）+ 对流（风）。\nCDE GNN 把这套 PDE 搬到图上：扩散项处理同质邻居（信息聚合），对流项处理异质邻居（信息定向重导）。\n比 heat 方程严格更一般 —— heat 是 $\\mathbf v=0$ 的特例。",
+    desc:"经典流体力学 —— 流体里同时有扩散（浓度梯度驱动）和对流（速度场驱动）。\n论文 Sec. 3.1 海洋类比（line 219-223）：海水中 $x$ 是热浓度，$\\mathbf v$ 是洋流。\nSec. 4 (line 325-340) 进一步类比：同质图像固体材料（粒子受连接束缚，热扩散主导），异质图像气/液材料（粒子运动自由，必须有对流项）。\nCDE GNN 把这套 PDE 搬到图上：扩散项处理同质邻居（信息聚合），对流项处理异质邻居（信息重定向）。\n比 heat 方程严格更一般 —— heat 是 $\\mathbf v=0$ 的特例。",
     role:"核心概念 ★"
   },
   "ODESolverEuler": {

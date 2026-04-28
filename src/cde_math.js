@@ -1,5 +1,10 @@
-﻿// Real DGAC math engine (toy scale, 20 nodes).
-// Runs actual sparse-ish diffusion: H ← α·Â·H + H₀, k-means, C-prop.
+﻿// Real CDE math engine (toy scale, 20 nodes).
+// Runs forward Euler ODE on Eq.8: dX/dt = (A(X)-I)X + div(V⊙X).
+// V_ij = σ(W(x_j - x_i)) per Eq.10, with random-Gaussian seed W
+// (not end-to-end trained — playground prioritises explanation over
+// reproduction). Returns per-step trajectories X(t) for both
+// GRAND-only (heat) and CDE (heat + convection) branches so the
+// dual-panel time theatre can scrub through t ∈ [0, T].
 // All ops are plain JS arrays — no deps. Complexity trivial at N=20.
 
 (function(){
