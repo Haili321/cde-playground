@@ -74,8 +74,11 @@ function KatexInline({ tex }) {
 // Time scrubber lets the user drag t ∈ [0, T]. Node colour = nearest-
 // centroid prediction, mis-classified nodes get dark stroke. Right panel
 // overlays per-node velocity arrows showing the convection direction.
-// Bottom: live ACC display (left vs right) so the user sees CDE pull
-// ahead as t increases on the heterophilic graph.
+//
+// Mechanism-only — no ACC display in the theatre. The toy ODE setup
+// (fixed centroids + no add_source term) makes toy ACC drop too steeply,
+// which is not paper behaviour. Real performance numbers live in the
+// Table 3 / Table 2 panel below (see extras.jsx).
 // ==============================================================
 function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId }) {
   const G = window.DEMO_GRAPHS[tweaks.dataset];
@@ -104,10 +107,7 @@ function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId 
   const predGrand = window.CDE_MATH.classifyNearest(cde.trajGrand[t], cde.centers);
   const predCDE   = window.CDE_MATH.classifyNearest(cde.trajCDE[t], cde.centers);
 
-  const accGrand = cde.accGrand[t];
-  const accCDE   = cde.accCDE[t];
-  const accAdv   = (accCDE - accGrand) * 100;
-
+  // ACC display intentionally removed — see header comment.
   const clusterColors = G.clusters.map(c => c.color);
 
   // Pos of node n in panel using projection proj. Anchor is its layout (n.tx, n.ty);
@@ -227,14 +227,6 @@ function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId 
             <div className="mono" style={{fontSize:10, color:"#a8a194"}}>div(D∇x)</div>
           </div>
           {renderPanel(predGrand, projGrand, "grand")}
-          <div style={{marginTop:8, padding:"8px 12px", background:"oklch(0.97 0.02 250)",
-            border:"1px solid oklch(0.85 0.06 250)", borderRadius:6,
-            display:"flex", alignItems:"baseline", justifyContent:"space-between"}}>
-            <span style={{fontSize:11, color:"#3d3a35"}}>分类 ACC</span>
-            <span className="mono" style={{fontSize:18, color:"oklch(0.40 0.10 250)", fontWeight:600}}>
-              {(accGrand*100).toFixed(1)}<span style={{fontSize:11, color:"#a8a194"}}>%</span>
-            </span>
-          </div>
         </div>
 
         {/* RIGHT — CDE */}
@@ -246,21 +238,6 @@ function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId 
             <div className="mono" style={{fontSize:10, color:"#a8a194"}}>div(D∇x) − div(v·x)</div>
           </div>
           {renderPanel(predCDE, projCDE, "cde")}
-          <div style={{marginTop:8, padding:"8px 12px", background:"oklch(0.97 0.03 320)",
-            border:"1px solid oklch(0.78 0.10 320)", borderRadius:6,
-            display:"flex", alignItems:"baseline", justifyContent:"space-between"}}>
-            <span style={{fontSize:11, color:"#3d3a35"}}>分类 ACC</span>
-            <span className="mono" style={{fontSize:18, color:"oklch(0.40 0.13 320)", fontWeight:600}}>
-              {(accCDE*100).toFixed(1)}<span style={{fontSize:11, color:"#a8a194"}}>%</span>
-              {Math.abs(accAdv) > 0.5 && (
-                <span style={{fontSize:11, marginLeft:8,
-                  color: accAdv > 0 ? "oklch(0.45 0.15 150)" : "oklch(0.55 0.15 25)",
-                  fontWeight:700}}>
-                  {accAdv > 0 ? "★ +" : ""}{accAdv.toFixed(1)}<span style={{fontSize:9}}>pp</span>
-                </span>
-              )}
-            </span>
-          </div>
         </div>
       </div>
 
@@ -270,6 +247,11 @@ function CDETheatre({ cde, tIdx, setTIdx, autoplay, setAutoplay, tweaks, stepId 
         <span>● 节点颜色 = 当前分类预测（按最近 centroid）</span>
         <span style={{color:"#1b1a18"}}>⬤ 误分节点</span>
         <span style={{color:"oklch(0.30 0.22 320)"}}>→ velocity 箭头（每节点 V_ij 平均, Eq.10）</span>
+      </div>
+      <div style={{marginTop:8, fontSize:10.5, color:"#a8a194",
+        fontStyle:"italic", lineHeight:1.55}}>
+        剧场仅演示 ODE 演化机制（节点位置 = X(t) 投影；箭头 = V_ij 方向）·
+        真实分类性能见下方 Paper Table 3 panel。
       </div>
     </div>
   );
