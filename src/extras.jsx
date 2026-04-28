@@ -30,24 +30,36 @@ function InlineKatex({ tex, style, displayMode=false }) {
 }
 
 // ============================================================
-// CDE Training Dynamics — ACC trajectory plot + paper Table 2 numbers.
-// Compares GRAND-only vs CDE branches over integration time t ∈ [0, T].
+// CDE Training Dynamics — paper Table 3 (integration-time ablation)
+// + paper Table 2 (per-benchmark CDE-GRAND vs GRAND ACC).
+// All numbers are real paper data; replaces the previous toy ACC plot
+// (which decayed too steeply due to fixed centroids + no source term —
+// not paper behaviour, see AlphaBetaResidual chip).
 // ============================================================
 function CDETrainingDynamics({ cde, tIdx, active }) {
-  const accG = cde.accGrand;
-  const accC = cde.accCDE;
-  const N = accG.length;
-  const tau = cde.tau;
+  const C_ROMAN = "oklch(0.45 0.18 250)";
+  const C_MINE  = "oklch(0.42 0.20 320)";
 
-  // Plot geometry
-  const W = 380, H = 170, padL = 40, padR = 14, padT = 14, padB = 28;
+  // Paper Table 3 — integration-time ablation on CDE-GRAND.
+  // Sec. 5.6 (line 1107-1118) + raw numbers (paper line 870-947).
+  // Each entry: [T, mean ACC%, std%].  τ=1 throughout.
+  const T3 = [
+    { name:"Roman · Euler", color:C_ROMAN, dash:false, peakIdx:2,
+      data:[[1.0,87.26,0.46],[2.0,91.55,0.42],[3.0,91.64,0.28],[4.0,91.62,0.34],[5.0,91.16,0.67]] },
+    { name:"Roman · RK4",   color:C_ROMAN, dash:true,  peakIdx:0,
+      data:[[1.0,91.55,0.66],[2.0,91.10,1.16],[3.0,90.82,2.18],[4.0,91.00,1.31],[5.0,90.26,2.16]] },
+    { name:"Mine · Euler",  color:C_MINE,  dash:false, peakIdx:3,
+      data:[[1.0,87.13,1.36],[2.0,90.46,0.66],[3.0,92.00,0.60],[4.0,93.21,0.43],[5.0,93.11,2.36]] },
+    { name:"Mine · RK4",    color:C_MINE,  dash:true,  peakIdx:3,
+      data:[[1.0,93.05,0.48],[2.0,94.64,2.32],[3.0,94.35,3.62],[4.0,97.67,0.22],[5.0,97.10,2.02]] },
+  ];
+
+  // Plot geometry — y axis 84% to 100% (covers 87.13 lowest .. 97.67 highest)
+  const W = 400, H = 215, padL = 36, padR = 14, padT = 16, padB = 30;
   const innerW = W - padL - padR, innerH = H - padT - padB;
-  const xToPx = i => padL + (i/(N-1)) * innerW;
-  const yToPx = a => padT + (1 - a) * innerH;
-
-  const path = (arr) => arr.map((a,i) =>
-    `${i===0?"M":"L"}${xToPx(i).toFixed(1)},${yToPx(a).toFixed(1)}`
-  ).join(" ");
+  const Y_MIN = 84, Y_MAX = 100;
+  const xToPxT = T => padL + ((T-1)/4) * innerW;
+  const yToPxA = a => padT + ((Y_MAX - a)/(Y_MAX - Y_MIN)) * innerH;
 
   // Paper Table 2 highlights — real CDE-GRAND vs GRAND ACC (%) per dataset
   const benchmark = [
@@ -68,73 +80,104 @@ function CDETrainingDynamics({ cde, tIdx, active }) {
     }}>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:10}}>
         <span style={{fontSize:11, color:"#a8a194", letterSpacing:"0.14em"}}>
-          训练动力学 · TRAINING DYNAMICS
+          论文真实数据 · PAPER TABLE 3 + TABLE 2
         </span>
-        <span className="mono" style={{fontSize:10.5, color: active?C_CDE:"#a8a194"}}>
-          step {tIdx} / {N-1}
+        <span className="mono" style={{fontSize:10.5, color:"#827d75"}}>
+          Sec. 5.6 · Sec. 5.2
         </span>
       </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"1.1fr 1fr", gap:14}}>
-        {/* LEFT — ACC vs t line chart */}
+      <div style={{display:"grid", gridTemplateColumns:"1.2fr 1fr", gap:14}}>
+        {/* LEFT — Paper Table 3 · ACC vs T (integration time ablation) */}
         <div>
-          <div style={{fontSize:11, color:"#3d3a35", marginBottom:6, lineHeight:1.5}}>
-            分类 ACC 随积分时间 <InlineKatex tex="t\in[0,T]"/> 演化（toy 20 节点异质图）
+          <div style={{fontSize:11, color:"#3d3a35", marginBottom:6, lineHeight:1.55}}>
+            Table 3 · CDE-GRAND ACC <InlineKatex tex="(\%)"/> vs 积分时间 <InlineKatex tex="T"/>
+            （<InlineKatex tex="\tau=1"/>，10 random seed 平均 ± std）
           </div>
           <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%", height:"auto",
             background:"#fdfaf2", border:"1px solid #f0eadf", borderRadius:6, display:"block"}}>
-            {/* gridlines */}
-            {[0, 0.25, 0.5, 0.75, 1.0].map(a => (
+            {/* y-axis gridlines + ticks (every 4%) */}
+            {[84, 88, 92, 96, 100].map(a => (
               <g key={a}>
-                <line x1={padL} x2={W-padR} y1={yToPx(a)} y2={yToPx(a)}
+                <line x1={padL} x2={W-padR} y1={yToPxA(a)} y2={yToPxA(a)}
                   stroke="#f0eadf" strokeWidth="1"/>
-                <text x={padL-6} y={yToPx(a)+3} textAnchor="end"
+                <text x={padL-6} y={yToPxA(a)+3} textAnchor="end"
                   style={{fontSize:9, fill:"#a8a194", fontFamily:"'JetBrains Mono',monospace"}}>
-                  {(a*100).toFixed(0)}
+                  {a}
                 </text>
               </g>
             ))}
-            {/* x-axis ticks */}
-            {[0, 0.25, 0.5, 0.75, 1.0].map(f => {
-              const i = Math.round(f * (N-1));
-              return (
-                <text key={f} x={xToPx(i)} y={H-padB+14} textAnchor="middle"
-                  style={{fontSize:9, fill:"#827d75", fontFamily:"'JetBrains Mono',monospace"}}>
-                  {(i*tau).toFixed(1)}
-                </text>
-              );
-            })}
-            <text x={padL+innerW/2} y={H-2} textAnchor="middle"
-              style={{fontSize:9.5, fill:"#a8a194", letterSpacing:"0.06em"}}>t (积分时间)</text>
+            {/* x-axis ticks T = 1..5 */}
+            {[1,2,3,4,5].map(T => (
+              <text key={T} x={xToPxT(T)} y={H-padB+14} textAnchor="middle"
+                style={{fontSize:9.5, fill:"#827d75", fontFamily:"'JetBrains Mono',monospace"}}>
+                {T.toFixed(1)}
+              </text>
+            ))}
+            <text x={padL+innerW/2} y={H-4} textAnchor="middle"
+              style={{fontSize:9.5, fill:"#a8a194", letterSpacing:"0.06em"}}>T (积分时间)</text>
             <text x={6} y={padT+8}
               style={{fontSize:9, fill:"#a8a194", letterSpacing:"0.06em"}}>ACC %</text>
 
-            {/* curves */}
-            <path d={path(accG)} fill="none" stroke={C_GRAND} strokeWidth="2"
-              strokeDasharray="3 3" opacity="0.85"/>
-            <path d={path(accC)} fill="none" stroke={C_CDE} strokeWidth="2.4"
-              opacity="0.95"/>
+            {/* 4 series — error bars + line + dots + peak markers */}
+            {T3.map((s) => {
+              const path = s.data.map(([T,m], i) =>
+                `${i===0?"M":"L"}${xToPxT(T).toFixed(1)},${yToPxA(m).toFixed(1)}`
+              ).join(" ");
+              return (
+                <g key={s.name}>
+                  {/* error bars (mean ± std) */}
+                  {s.data.map(([T,m,std]) => (
+                    <g key={`eb-${T}`}>
+                      <line x1={xToPxT(T)} x2={xToPxT(T)}
+                        y1={yToPxA(m+std)} y2={yToPxA(m-std)}
+                        stroke={s.color} strokeWidth="1" opacity="0.4"/>
+                      <line x1={xToPxT(T)-2} x2={xToPxT(T)+2}
+                        y1={yToPxA(m+std)} y2={yToPxA(m+std)}
+                        stroke={s.color} strokeWidth="1" opacity="0.4"/>
+                      <line x1={xToPxT(T)-2} x2={xToPxT(T)+2}
+                        y1={yToPxA(m-std)} y2={yToPxA(m-std)}
+                        stroke={s.color} strokeWidth="1" opacity="0.4"/>
+                    </g>
+                  ))}
+                  {/* line */}
+                  <path d={path} fill="none" stroke={s.color}
+                    strokeWidth="1.8" opacity="0.92"
+                    strokeDasharray={s.dash ? "4 3" : "none"}/>
+                  {/* dots; peak slightly larger with white halo */}
+                  {s.data.map(([T,m], i) => (
+                    <circle key={`d-${T}`} cx={xToPxT(T)} cy={yToPxA(m)}
+                      r={i === s.peakIdx ? 4.2 : 2.8}
+                      fill={s.color}
+                      stroke={i === s.peakIdx ? "#fffdf7" : "none"}
+                      strokeWidth={i === s.peakIdx ? 1.5 : 0}/>
+                  ))}
+                  {/* peak ★ above peak point */}
+                  {s.peakIdx >= 0 && (
+                    <text x={xToPxT(s.data[s.peakIdx][0])}
+                      y={yToPxA(s.data[s.peakIdx][1])-9}
+                      textAnchor="middle"
+                      style={{fontSize:10, fill:s.color, fontWeight:700}}>★</text>
+                  )}
+                </g>
+              );
+            })}
 
-            {/* current t marker */}
-            <line x1={xToPx(tIdx)} x2={xToPx(tIdx)} y1={padT-4} y2={H-padB}
-              stroke="#1b1a18" strokeWidth="0.8" strokeDasharray="2 2"/>
-            <circle cx={xToPx(tIdx)} cy={yToPx(accG[tIdx])} r="3.5"
-              fill={C_GRAND} stroke="#fffdf7" strokeWidth="1"/>
-            <circle cx={xToPx(tIdx)} cy={yToPx(accC[tIdx])} r="4"
-              fill={C_CDE} stroke="#fffdf7" strokeWidth="1.2"/>
-
-            {/* legend */}
-            <g transform={`translate(${padL+8}, ${padT+6})`}>
-              <line x1={0} y1={0} x2={18} y2={0} stroke={C_GRAND} strokeWidth="2" strokeDasharray="3 3"/>
-              <text x={22} y={3} style={{fontSize:9.5, fill:C_GRAND, fontWeight:600}}>GRAND</text>
-              <line x1={70} y1={0} x2={88} y2={0} stroke={C_CDE} strokeWidth="2.4"/>
-              <text x={92} y={3} style={{fontSize:9.5, fill:C_CDE, fontWeight:600}}>CDE ★</text>
+            {/* legend (top-right corner) */}
+            <g transform={`translate(${W-padR-176}, ${padT+4})`}>
+              <line x1={0} y1={0} x2={14} y2={0} stroke={C_ROMAN} strokeWidth="1.8"/>
+              <text x={18} y={3} style={{fontSize:9, fill:C_ROMAN, fontWeight:600}}>Roman</text>
+              <line x1={56} y1={0} x2={70} y2={0} stroke={C_ROMAN} strokeWidth="1.8" strokeDasharray="4 3"/>
+              <text x={74} y={3} style={{fontSize:9, fill:C_ROMAN, fontStyle:"italic"}}>RK4</text>
+              <line x1={102} y1={0} x2={116} y2={0} stroke={C_MINE} strokeWidth="1.8"/>
+              <text x={120} y={3} style={{fontSize:9, fill:C_MINE, fontWeight:600}}>Mine</text>
+              <line x1={150} y1={0} x2={164} y2={0} stroke={C_MINE} strokeWidth="1.8" strokeDasharray="4 3"/>
+              <text x={168} y={3} style={{fontSize:9, fill:C_MINE, fontStyle:"italic"}}>RK4</text>
             </g>
           </svg>
-          <div style={{fontSize:10.5, color:"#827d75", marginTop:6, lineHeight:1.5}}>
-            t=0 两边一样（X(0) 离 centroid 最近）；t↑ 后 over-smoothing 出现，
-            异质图上 GRAND 受影响通常更大。
-            <span style={{color:"#a8a194"}}> · toy seed W；论文 +20% 见右 →</span>
+          <div style={{fontSize:10.5, color:"#827d75", marginTop:6, lineHeight:1.55}}>
+            ★ peak · paper 文字仅描述「improves to <i>saturation point</i>」（line 1112-1118），
+            未描述过饱和后大幅下降 — T=5 较峰值仅微降 <InlineKatex tex="<0.5\,\mathrm{pp}"/>。
           </div>
         </div>
 
