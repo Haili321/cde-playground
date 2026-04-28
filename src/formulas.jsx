@@ -283,6 +283,23 @@ const GLOSSARY = {
     role:"Attention 变体"
   },
 
+  // ─── Plug-in baseline 层 · Appendix A 给的扩散 baseline 公式 ─────────
+  "Eq14GraphBel": {
+    tex:"\\text{Eq.14}",
+    name:"GraphBel diffusion (Appendix A)",
+    formula:"\\frac{dX(t)}{dt} = \\bigl(A_S(X(t))\\odot B_S(X(t)) - \\Psi(X(t))\\bigr)\\,X(t)",
+    desc:"论文 Appendix A line 1443-1453 —— GraphBel 是 Beltrami / mean curvature / heat flow 的统一推广（Song et al. 2022）。\n  · $A_S(\\cdot)$ 是 learnable attention 函数\n  · $B_S(\\cdot)$ 是 normalized vector map\n  · $\\Psi(X)$ 是对角矩阵，$\\Psi(x_i,x_i)=\\sum_{x_j}(A\\odot B)(x_i,x_j)$\nGraphBel 是 CDE plug-in 哲学下能配的扩散 baseline 之一（与 GRAND-LAP/GAT/TRANS 并列）。\nTable 4 显示 CDE-GraphBel 比 GraphBel baseline 在异质数据集上显著提升。",
+    role:"扩散 baseline (Appendix A)"
+  },
+
+  "Eq15Sheaf": {
+    tex:"\\text{Eq.15}",
+    name:"Neural Sheaf Diffusion",
+    formula:"\\frac{dX(t)}{dt} = -\\sigma\\bigl(\\Delta_{F(t)}(I_n\\otimes W_1)X(t)W_2\\bigr)",
+    desc:"论文 Appendix A line 1454-1478 —— Bodnar et al. 2022 的 sheaf diffusion。\n$\\Delta_{F(t)}$ 是 sheaf Laplacian，由 learnable function 决定 $F(t)=g(G,X(t);\\theta)$；$W_1,W_2$ 是权重矩阵；$\\otimes$ 是 Kronecker 积。\n时间离散版（Eq.16）：$X_{t+1} = (1+\\varepsilon)X_t - \\sigma(\\Delta_{F(t)}(I\\otimes W_1^t)X_t W_2^t)$，$\\varepsilon\\in[-1,1]^d$ 也可学。\n设计目标（line 1468-1469）：处理异质图 + 缓解 over-smoothing。paper Table 4 列入 baseline 对比。",
+    role:"扩散 baseline (Appendix A)"
+  },
+
   // ─── Concept 层 ──────────────────────────────────────────────────
   "HeatDiffusion": {
     tex:"\\text{Heat}",
@@ -318,6 +335,15 @@ const GLOSSARY = {
     formula:"",
     desc:"论文 Algorithm 1（4 行）：\n  1. raw 输入特征经 MLP 压缩 → $X(0)$\n  2. ODE solver 求解 Eq.8 → 得到 $X(t)$ for $t\\in[0,T]$\n  3. 取终态 $X(T)$\n  4. 通过分类头做节点分类（cross-entropy loss）\n训练：所有可学习参数（MLP、$W$ in Eq.10、attention 参数）端到端联合优化。",
     role:"算法"
+  },
+
+  // ─── 方法对比 · Method comparison vs prior work ──────────────────
+  "ACMPCompare": {
+    tex:"\\text{ACMP vs CDE}",
+    name:"ACMP vs CDE 设计对比",
+    formula:"\\partial_t x_i = \\alpha\\!\\odot\\!\\sum_j(a-\\beta)(x_j-x_i) + \\delta\\odot x_i\\odot(1-x_i\\odot x_i)\\;\\;\\text{(ACMP)}",
+    desc:"论文 Sec. 2.2 line 169-170 + Appendix B line 1487-1530 —— paper 主动给出的与 ACMP（Wang et al. 2023b, Allen-Cahn message passing）的设计对比。\n方程对比（line 1499-1507）：\n  · CDE: $\\partial_t x_i = \\sum_j a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$\n  · ACMP: 受 particle reaction-diffusion 启发，用 repulsive/attractive 力（公式见 chip formula 处）\n核心差异（line 1517-1530）：\n  1. ACMP 只有 2 方向（$\\pm(x_j-x_i)$）；CDE 通过 $W,\\sigma$ 灵活方向\n  2. ACMP 是 vector-wise 加权和；CDE 是 channel-wise 调制（每维独立比例）\n  3. paper 论点：「even if neighboring nodes generally have different features in heterophily, their features in some dimensions may still be close」→ channel-wise 调制能捕捉这种细粒度\npaper 结论 line 1513：「Our model surpasses ACMP on all the heterophilic datasets」。\n⚠️ 注意：line 1502 的 CDE 公式再次用了 $\\odot x_i$（与主文 Eq.9 矛盾），这是 Appendix B typo 的第二处出现 —— 见 AppendixBTypo chip。",
+    role:"方法对比 (Sec. 2.2 + App.B)"
   },
 
   // ─── Code-only 细节层 · paper 没明写但 code 里有的工程设计 ───────
@@ -378,8 +404,8 @@ const RELATED = {
   divOp:       [],
   gradX:       ["xi","Xt","E","Eq3Grad"],
   divX:        ["E","Eq4Div"],
-  Dmatrix:     ["E"],
-  Vij:         ["xi","sigma","Wmatrix","Eq10Velocity","r"],
+  Dmatrix:     ["E","Eq14GraphBel","Eq15Sheaf"],
+  Vij:         ["xi","sigma","Wmatrix","Eq10Velocity","r","ACMPCompare"],
   Vmatrix:     ["Vij","E"],
   hadamard:    [],
   Amatrix:     ["aij","xi","Xt"],
@@ -397,28 +423,33 @@ const RELATED = {
 
   // Eq 层
   Eq1Heat:     ["partt","divOp","Dmatrix","nablaOp"],
-  Eq2CDE:      ["partt","divOp","Dmatrix","nablaOp"],
+  Eq2CDE:      ["partt","divOp","Dmatrix","nablaOp","ACMPCompare"],
   Eq3Grad:     ["xi","Xt","E","gradX"],
   Eq4Div:      ["divX","E"],
-  Eq5GRAND:    ["Xt","Dmatrix","gradX","Amatrix","Imatrix","divOp","hadamard"],
+  Eq5GRAND:    ["Xt","Dmatrix","gradX","Amatrix","Imatrix","divOp","hadamard","Eq14GraphBel","Eq15Sheaf"],
   Eq8CDEGraph: ["partt","Xt","divOp","Dmatrix","gradX","Vmatrix","hadamard"],
-  Eq9Conv:     ["divX","Vij","xi","E","hadamard"],
-  Eq10Velocity:["Vij","sigma","Wmatrix","xi"],
+  Eq9Conv:     ["divX","Vij","xi","E","hadamard","ACMPCompare"],
+  Eq10Velocity:["Vij","sigma","Wmatrix","xi","ACMPCompare"],
   Eq11AttnTRANS:["aij","xi"],
   Eq12AttnGAT: ["aij","xi","Wmatrix"],
+  Eq14GraphBel:["Xt","Dmatrix","hadamard","Eq5GRAND"],
+  Eq15Sheaf:   ["Xt","sigma","Dmatrix","Eq5GRAND"],
 
   // Concept 层
   HeatDiffusion:      ["partt","divOp","Dmatrix","nablaOp","Eq1Heat"],
-  ConvectionDiffusion:["partt","divOp","Dmatrix","nablaOp","Vmatrix","Eq2CDE","Eq8CDEGraph"],
+  ConvectionDiffusion:["partt","divOp","Dmatrix","nablaOp","Vmatrix","Eq2CDE","Eq8CDEGraph","ACMPCompare"],
   ODESolverEuler:     ["Xt","tau","Tint"],
   ODESolverRK4:       ["Xt","tau"],
   Algorithm1:         ["Xt","Tint","Vij","Wmatrix","yu"],
+
+  // 方法对比层
+  ACMPCompare:        ["Vij","Eq10Velocity","Eq9Conv","Eq2CDE","AppendixBTypo"],
 
   // Code-only 工程细节层
   AlphaBetaResidual:  ["Xt","Algorithm1","Eq8CDEGraph"],
   OutputLowHigh:      ["Eq8CDEGraph","Eq9Conv","Eq10Velocity"],
   EdgeAttention1:     ["xi","Vij","Eq9Conv"],
-  AppendixBTypo:      ["Eq9Conv","Eq10Velocity","Vij"],
+  AppendixBTypo:      ["Eq9Conv","Eq10Velocity","Vij","ACMPCompare"],
   EarlyStopPath:      ["Xt","Tint","Algorithm1","yu"],
 };
 

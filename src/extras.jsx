@@ -30,6 +30,121 @@ function InlineKatex({ tex, style, displayMode=false }) {
 }
 
 // ============================================================
+// CDE Dataset Table — paper Table 1 statistics for the 9 heterophilic
+// benchmarks. Sorted by h_adj (most heterophilic first); highlights the
+// 3 datasets where paper line 845-846 claims CDE-GRAND best.
+// All numbers from paper line 460-544 + Sec. 5.2.
+// ============================================================
+function CDEDatasetTable({ active }) {
+  const T1 = [
+    { name:"Roman-empire",   N:22662, E:32927,    C:18, r:300,  hedge:0.05, hadj:-0.05, sota:true  },
+    { name:"Wiki-cooc",      N:10000, E:2243042,  C:5,  r:100,  hedge:0.34, hadj:-0.03, sota:true  },
+    { name:"Minesweeper",    N:10000, E:39402,    C:2,  r:7,    hedge:0.68, hadj: 0.01, sota:true  },
+    { name:"Questions",      N:48921, E:153540,   C:2,  r:301,  hedge:0.84, hadj: 0.02, sota:false },
+    { name:"Texas",          N:183,   E:295,      C:5,  r:1703, hedge:0.11, hadj: 0.04, sota:false },
+    { name:"Cornell",        N:183,   E:280,      C:5,  r:1703, hedge:0.30, hadj: 0.04, sota:false },
+    { name:"Wisconsin",      N:251,   E:466,      C:5,  r:1703, hedge:0.21, hadj: 0.07, sota:false },
+    { name:"Workers",        N:11758, E:519000,   C:2,  r:10,   hedge:0.59, hadj: 0.09, sota:false },
+    { name:"Amazon-ratings", N:24492, E:93050,    C:5,  r:300,  hedge:0.38, hadj: 0.14, sota:false },
+  ];
+
+  // h_adj color: -0.05 (most hetero) red → 0.14 (least) green
+  const hadjColor = h => {
+    const t = Math.max(0, Math.min(1, (h - (-0.05)) / (0.14 - (-0.05))));
+    const hue = 30 + t * 120;
+    return `oklch(0.55 ${0.18 - t*0.05} ${hue})`;
+  };
+  const fmt = n => n >= 10000 ? n.toLocaleString() : n.toString();
+
+  return (
+    <div style={{
+      background:"#fffdf7", border:"1px solid #e3ddd2", borderRadius:10,
+      padding:"16px 18px", marginBottom:12,
+      opacity: active?1:0.85, transition:"opacity .3s ease",
+    }}>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:10}}>
+        <span style={{fontSize:11, color:"#a8a194", letterSpacing:"0.14em"}}>
+          论文 Table 1 · 9 个 HETEROPHILIC BENCHMARKS
+        </span>
+        <span className="mono" style={{fontSize:10.5, color:"#827d75"}}>
+          Sec. 5.2 · line 460-544
+        </span>
+      </div>
+      <div style={{fontSize:11, color:"#3d3a35", marginBottom:8, lineHeight:1.55}}>
+        按 <InlineKatex tex="h_{\mathrm{adj}}"/> 升序排（最异质 → 最同质）·
+        <span style={{color:"oklch(0.55 0.16 65)", fontWeight:600, marginLeft:4}}>★</span> = paper
+        line 845-846 明确 CDE-GRAND <i>best</i> 的 3 个最异质数据集
+      </div>
+      <table style={{width:"100%", borderCollapse:"collapse", fontSize:11.5}}>
+        <thead>
+          <tr style={{borderBottom:"1px solid #c8c1b4"}}>
+            <th style={{textAlign:"left", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>Dataset</th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="h_{\mathrm{adj}}"/>
+            </th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="h_{\mathrm{edge}}"/>
+            </th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="N"/>
+            </th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="|E|"/>
+            </th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="C"/>
+            </th>
+            <th style={{textAlign:"right", color:"#827d75", fontWeight:500, padding:"5px 6px"}}>
+              <InlineKatex tex="r"/>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {T1.map(d => (
+            <tr key={d.name} style={{
+              background: d.sota ? "oklch(0.97 0.04 320)" : "transparent",
+              borderBottom: "1px solid #f3eee2",
+            }}>
+              <td style={{padding:"5px 6px", fontWeight: d.sota?600:400, color:"#1b1a18"}}>
+                {d.sota && <span style={{color:"oklch(0.55 0.16 65)", marginRight:4}}>★</span>}
+                {d.name}
+              </td>
+              <td className="mono" style={{
+                textAlign:"right", padding:"5px 6px",
+                color: hadjColor(d.hadj), fontWeight:600,
+              }}>
+                {d.hadj > 0 ? `+${d.hadj.toFixed(2)}` : d.hadj.toFixed(2)}
+              </td>
+              <td className="mono" style={{textAlign:"right", padding:"5px 6px", color:"#827d75"}}>
+                {d.hedge.toFixed(2)}
+              </td>
+              <td className="mono" style={{textAlign:"right", padding:"5px 6px", color:"#3d3a35"}}>
+                {fmt(d.N)}
+              </td>
+              <td className="mono" style={{textAlign:"right", padding:"5px 6px", color:"#3d3a35"}}>
+                {fmt(d.E)}
+              </td>
+              <td className="mono" style={{textAlign:"right", padding:"5px 6px", color:"#3d3a35"}}>
+                {d.C}
+              </td>
+              <td className="mono" style={{textAlign:"right", padding:"5px 6px", color:"#3d3a35"}}>
+                {fmt(d.r)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{fontSize:10.5, color:"#827d75", marginTop:10, lineHeight:1.6}}>
+        train/val/test = 50/25/25（Platonov et al. 2023 fixed splits, paper line 442）·
+        Wiki-cooc 边数 2.24M 但 <InlineKatex tex="h_{\mathrm{adj}}=-0.03"/>，验证 CDE 抗高密度异质边 ·
+        Texas/Cornell/Wisconsin 仅 ~200 节点（WebKB），<InlineKatex tex="r=1703"/> 高维特征 → 不同 regime ·
+        Minesweeper/Workers/Questions 是 binary class，paper 用 ROC-AUC 评估（line 443-445）。
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // CDE Training Dynamics — paper Table 3 (integration-time ablation)
 // + paper Table 2 (per-benchmark CDE-GRAND vs GRAND ACC).
 // All numbers are real paper data; replaces the previous toy ACC plot
@@ -398,6 +513,7 @@ function LossBreakdown({ active, tick, cde, tIdx, tweaks }) {
   }
   return (
     <div>
+      <CDEDatasetTable active={active}/>
       <CDETrainingDynamics cde={cde} tIdx={tIdx||0} active={active}/>
       <CDEFigure1 tweaks={tweaks||{beta:0.5}} active={active}/>
     </div>
@@ -405,6 +521,7 @@ function LossBreakdown({ active, tick, cde, tIdx, tweaks }) {
 }
 
 window.LossBreakdown = LossBreakdown;
+window.CDEDatasetTable = CDEDatasetTable;
 window.CDETrainingDynamics = CDETrainingDynamics;
 window.CDEFigure1 = CDEFigure1;
 window.InlineKatex = InlineKatex;
