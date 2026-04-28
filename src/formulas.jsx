@@ -1,18 +1,18 @@
-﻿// Formula panel — KaTeX math + click-to-explain popovers (CDE edition).
+﻿// Formula panel，KaTeX math + click-to-explain popovers (CDE edition).
 //
 // Paper: Graph Neural Convection-Diffusion with Heterophily (IJCAI 2023)
 // arXiv: 2305.16780
 //
 // Each GLOSSARY entry:
-//   tex     — small chip + popover header symbol
-//   name    — bilingual short title
-//   formula — optional longer KaTeX formula in popover body
-//   desc    — multi-line description (\n separates lines, supports $...$ inline math)
-//   role    — one-line "role in CDE" pill (PLAIN TEXT — no LaTeX!)
+//   tex    ，small chip + popover header symbol
+//   name   ，bilingual short title
+//   formula，optional longer KaTeX formula in popover body
+//   desc   ，multi-line description (\n separates lines, supports $...$ inline math)
+//   role   ，one-line "role in CDE" pill (PLAIN TEXT，no LaTeX!)
 //
 // Strict rules learned from DGAC playground:
-//   • desc CANNOT contain markdown **bold** (won't render, shows literal **)
-//   • role is PLAIN TEXT — no $...$, no \mathcal, no LaTeX
+//   • desc CANNOT contain markdown bold; literal asterisks would show through
+//   • role is PLAIN TEXT，no $...$, no \mathcal, no LaTeX
 //   • Inner Chinese-context quotes use 「」 not "..." (the latter break JS strings)
 
 const { useState: useStateF, useRef: useRefF, useEffect: useEffectF } = React;
@@ -23,7 +23,7 @@ const GLOSSARY = {
     tex:"\\mathcal G",
     name:"图 · Graph",
     formula:"\\mathcal G=(V,\\,E,\\,w)",
-    desc:"论文 Sec. 3.2 —— 输入图是 $(V,E,w)$ 三元组：节点集 $V$、边集 $E$、边权函数 $w:E\\to\\mathbb R^+$。\n注意 CDE 比标准 GNN 多一个 $w$（边权融入扩散系数 $D$ 中）；无权图视作 $w\\equiv 1$。\n另外还有节点特征矩阵 $X(0)\\in\\mathbb R^{N\\times r}$ 作为初始条件（PDE 的 initial value）。",
+    desc:"论文 Sec. 3.2：输入图是 $(V,E,w)$ 三元组：节点集 $V$、边集 $E$、边权函数 $w:E\\to\\mathbb R^+$。\n注意 CDE 比标准 GNN 多一个 $w$（边权融入扩散系数 $D$ 中）；无权图视作 $w\\equiv 1$。\n另外还有节点特征矩阵 $X(0)\\in\\mathbb R^{N\\times r}$ 作为初始条件（PDE 的 initial value）。",
     role:"输入图"
   },
   "V": {
@@ -65,7 +65,7 @@ const GLOSSARY = {
     tex:"X(t)",
     name:"时变特征矩阵 · Time-evolving features",
     formula:"X(t)\\in\\mathbb R^{N\\times r},\\quad t\\in[0,T]",
-    desc:"CDE 的核心建模对象 —— 节点特征随时间演化。\n初值 $X(0)$ 通常由 raw 输入经 MLP 压缩得到（Alg.1 step 1）。\n中间态由 PDE $\\partial X/\\partial t = \\mathrm{div}(D\\odot\\nabla X)+\\mathrm{div}(V\\odot X)$ 决定（Eq.8），用 ODE solver 数值求解。\n终态 $X(T)$ 经分类头做节点分类（Alg.1 step 3-4）。",
+    desc:"CDE 的核心建模对象：节点特征随时间演化。\n初值 $X(0)$ 通常由 raw 输入经 MLP 压缩得到（Alg.1 step 1）。\n中间态由 PDE $\\partial X/\\partial t = \\mathrm{div}(D\\odot\\nabla X)+\\mathrm{div}(V\\odot X)$ 决定（Eq.8），用 ODE solver 数值求解。\n终态 $X(T)$ 经分类头做节点分类（Alg.1 step 3-4）。",
     role:"演化变量"
   },
   "xi": {
@@ -79,35 +79,35 @@ const GLOSSARY = {
     tex:"\\partial_t",
     name:"时间偏导 · Time derivative",
     formula:"\\frac{\\partial x}{\\partial t}",
-    desc:"PDE 的左侧 —— 描述特征随时间如何变化。\n热扩散：$\\partial x/\\partial t = \\mathrm{div}(D\\nabla x)$（Eq.1）。\nCDE：$\\partial x/\\partial t = \\mathrm{div}(D\\nabla x) - \\mathrm{div}(\\mathbf v\\,x)$（Eq.2）。\n图上离散化后变成 ODE $dX/dt = f(X)$，用 Euler 或 RK4 数值求解。",
+    desc:"PDE 的左侧：描述特征随时间如何变化。\n热扩散：$\\partial x/\\partial t = \\mathrm{div}(D\\nabla x)$（Eq.1）。\nCDE：$\\partial x/\\partial t = \\mathrm{div}(D\\nabla x) - \\mathrm{div}(\\mathbf v\\,x)$（Eq.2）。\n图上离散化后变成 ODE $dX/dt = f(X)$，用 Euler 或 RK4 数值求解。",
     role:"PDE 算子"
   },
   "nablaOp": {
     tex:"\\nabla",
     name:"梯度算子（连续）",
     formula:"\\nabla x = \\bigl(\\tfrac{\\partial x}{\\partial u_1},\\dots,\\tfrac{\\partial x}{\\partial u_d}\\bigr)",
-    desc:"经典向量分析中的梯度 —— 把标量场 $x$ 变成向量场，指向 $x$ 增长最快的方向。\n热方程 $\\partial x/\\partial t = \\mathrm{div}(D\\nabla x)$ 的 $\\nabla x$ 是浓度梯度。\n图上离散化（论文 Eq.3）：$(\\nabla X)_{ij} = x_j - x_i$ —— 每条边上的「梯度」就是端点特征差。",
+    desc:"经典向量分析中的梯度：把标量场 $x$ 变成向量场，指向 $x$ 增长最快的方向。\n热方程 $\\partial x/\\partial t = \\mathrm{div}(D\\nabla x)$ 的 $\\nabla x$ 是浓度梯度。\n图上离散化（论文 Eq.3）：$(\\nabla X)_{ij} = x_j - x_i$：每条边上的「梯度」就是端点特征差。",
     role:"微分算子"
   },
   "divOp": {
     tex:"\\mathrm{div}",
     name:"散度算子（连续）",
     formula:"\\mathrm{div}(\\mathbf F) = \\textstyle\\sum_i \\frac{\\partial F_i}{\\partial u_i}",
-    desc:"向量场 $\\mathbf F$ 的散度 —— 描述场的「源/汇」强度（流出该点的净流量）。\n图上离散化（论文 Eq.4）：$(\\mathrm{div}\\,\\mathcal X)_i = \\sum_{j:(i,j)\\in E}\\mathcal X_{ij}$ —— 节点 $i$ 处散度是其所有连接边上量的求和。\n这就是熟悉的 GNN 邻居聚合（neighbor aggregation）。",
+    desc:"向量场 $\\mathbf F$ 的散度：描述场的「源/汇」强度（流出该点的净流量）。\n图上离散化（论文 Eq.4）：$(\\mathrm{div}\\,\\mathcal X)_i = \\sum_{j:(i,j)\\in E}\\mathcal X_{ij}$：节点 $i$ 处散度是其所有连接边上量的求和。\n这就是熟悉的 GNN 邻居聚合（neighbor aggregation）。",
     role:"微分算子"
   },
   "gradX": {
     tex:"(\\nabla X)_{ij}",
     name:"图上梯度 · Graph gradient",
     formula:"(\\nabla X(t))_{ij} = x_j(t) - x_i(t),\\quad \\forall(i,j)\\in E",
-    desc:"论文 Eq.3 —— 把连续梯度 $\\nabla x$ 在图上离散化。\n每条边 $(i,j)$ 上的「梯度」就是端点特征差 $x_j - x_i$。\n直觉：梯度大说明两端「不一样」（异质），梯度小说明「一样」（同质）。\nCDE 的速度公式（Eq.10）正是由这个差驱动：$V_{ij}=\\sigma(W(x_j-x_i))$。",
+    desc:"论文 Eq.3：把连续梯度 $\\nabla x$ 在图上离散化。\n每条边 $(i,j)$ 上的「梯度」就是端点特征差 $x_j - x_i$。\n直觉：梯度大说明两端「不一样」（异质），梯度小说明「一样」（同质）。\nCDE 的速度公式（Eq.10）正是由这个差驱动：$V_{ij}=\\sigma(W(x_j-x_i))$。",
     role:"图离散化（Eq.3）"
   },
   "divX": {
     tex:"(\\mathrm{div}\\,\\mathcal X)_i",
     name:"图上散度 · Graph divergence",
     formula:"(\\mathrm{div}\\,\\mathcal X)_i = \\textstyle\\sum_{j:(i,j)\\in E}\\mathcal X_{ij}",
-    desc:"论文 Eq.4 —— 节点 $i$ 处散度是其所有连接边上量的求和。\n这正是 GNN 的 neighbor aggregation。\nCDE 的两项都用此算子：\n  · 扩散项 $(\\mathrm{div}(D\\odot\\nabla X))_i = \\sum_{j\\in N(i)} D_{ij}(x_j-x_i)$（沿梯度求和）\n  · 对流项 $(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（Eq.9，特征本身加权和）",
+    desc:"论文 Eq.4：节点 $i$ 处散度是其所有连接边上量的求和。\n这正是 GNN 的 neighbor aggregation。\nCDE 的两项都用此算子：\n  · 扩散项 $(\\mathrm{div}(D\\odot\\nabla X))_i = \\sum_{j\\in N(i)} D_{ij}(x_j-x_i)$（沿梯度求和）\n  · 对流项 $(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（Eq.9，特征本身加权和）",
     role:"图离散化（Eq.4）"
   },
   "Dmatrix": {
@@ -128,7 +128,7 @@ const GLOSSARY = {
     tex:"V(t)",
     name:"速度场 · Velocity field",
     formula:"V(t)=\\{V_{ij}(t)\\}_{(i,j)\\in E}",
-    desc:"全图所有边速度向量的集合，组成「速度场」（vector field on edges）。\n物理类比：$V$ 在图上的意义类似流体里的 $\\mathbf v$ field —— 每个位置（这里是边）有一个方向向量。\n与扩散系数 $D$ 不同：$D$ 是标量场（控制扩散速率），$V$ 是向量场（控制流向）。",
+    desc:"全图所有边速度向量的集合，组成「速度场」（vector field on edges）。\n物理类比：$V$ 在图上的意义类似流体里的 $\\mathbf v$ field：每个位置（这里是边）有一个方向向量。\n与扩散系数 $D$ 不同：$D$ 是标量场（控制扩散速率），$V$ 是向量场（控制流向）。",
     role:"全场速度"
   },
   "hadamard": {
@@ -163,21 +163,21 @@ const GLOSSARY = {
     tex:"\\sigma",
     name:"激活函数",
     formula:"\\sigma:\\mathbb R\\to\\mathbb R",
-    desc:"非线性激活函数（如 $\\tanh$ / ReLU / GELU）。\nCDE 的速度公式（Eq.10）：$V_{ij} = \\sigma(W(x_j-x_i))$。\n如果 $\\sigma=\\mathrm{id}$ 则 $V$ 是 $x_j-x_i$ 的线性变换；非线性 $\\sigma$ 让 $V$ 可以「拐弯」—— 学到方向不必与 $x_j-x_i$ 同向。\n论文实现常用 $\\tanh$（输出有界 $[-1,1]$，数值稳定）。",
+    desc:"非线性激活函数（如 $\\tanh$ / ReLU / GELU）。\nCDE 的速度公式（Eq.10）：$V_{ij} = \\sigma(W(x_j-x_i))$。\n如果 $\\sigma=\\mathrm{id}$ 则 $V$ 是 $x_j-x_i$ 的线性变换；非线性 $\\sigma$ 让 $V$ 可以「拐弯」： 学到方向不必与 $x_j-x_i$ 同向。\n论文实现常用 $\\tanh$（输出有界 $[-1,1]$，数值稳定）。",
     role:"激活函数"
   },
   "Wmatrix": {
     tex:"W",
     name:"可学习速度权重 · Velocity weight",
     formula:"W\\in\\mathbb R^{r\\times r}",
-    desc:"Eq.10 里的可学习矩阵。$V_{ij} = \\sigma(W(x_j - x_i))$。\n论文实现里 $W$ 用 PyTorch 的 `nn.Linear(r, r, bias=False)`。\n$W$ 是 paper Eq.10 明确描述的可学习参数；code 里 CDE 在 baseline 之上还有更多额外参数（频谱解耦的 $W_{\\mathrm{low}}/W_{\\mathrm{high}}$、concat-linear 的 lin2、LapConv 的 gate 等 —— paper 没明写，见 OutputLowHigh / EdgeAttention1 chip）。CDE 比 GRAND 增加 ~10% 训练时间 / ~1% 推理时间（paper Table 5 + line 1208-1209）。\n物理意义：$W$ 决定特征差如何映射成速度方向。\nplayground 用 random Gaussian $W$ 作 toy seed（不真训练，物理形式严格但不是论文学到的最优）。",
+    desc:"Eq.10 里的可学习矩阵。$V_{ij} = \\sigma(W(x_j - x_i))$。\n论文实现里 $W$ 用 PyTorch 的 `nn.Linear(r, r, bias=False)`。\n$W$ 是 paper Eq.10 明确描述的可学习参数；code 里 CDE 在 baseline 之上还有更多额外参数（频谱解耦的 $W_{\\mathrm{low}}/W_{\\mathrm{high}}$、concat-linear 的 lin2、LapConv 的 gate 等：paper 没明写，见 OutputLowHigh / EdgeAttention1 chip）。CDE 比 GRAND 增加 ~10% 训练时间 / ~1% 推理时间（paper Table 5 + line 1208-1209）。\n物理意义：$W$ 决定特征差如何映射成速度方向。\nplayground 用 random Gaussian $W$ 作 toy seed（不真训练，物理形式严格但不是论文学到的最优）。",
     role:"可学习参数"
   },
   "Tint": {
     tex:"T",
     name:"积分时间 · Integration time",
     formula:"T\\in\\mathbb R^+",
-    desc:"ODE 积分到的目标时间（Algorithm 1）。\n相当于 GNN 的「层数」概念 —— 但 CDE 是连续 PDE，无显式 layer（Table 3 caption）。每个 ODE step 算一次邻居聚合，$T/\\tau$ 等效隐式层数（$\\tau$ 是步长）。\nTable 3 ablation（line 1112-1118）：随 $T$ 增大准确率提升直至「saturation point」，更大 $T$ 计算成本更高。Roman-empire (Euler) 在 $T=3$ 达 91.64% 峰值，Minesweeper (Euler) 在 $T=4$ 达 93.21% 峰值。",
+    desc:"ODE 积分到的目标时间（Algorithm 1）。\n相当于 GNN 的「层数」概念：但 CDE 是连续 PDE，无显式 layer（Table 3 caption）。每个 ODE step 算一次邻居聚合，$T/\\tau$ 等效隐式层数（$\\tau$ 是步长）。\nTable 3 ablation（line 1112-1118）：随 $T$ 增大准确率提升直至「saturation point」，更大 $T$ 计算成本更高。Roman-empire (Euler) 在 $T=3$ 达 91.64% 峰值，Minesweeper (Euler) 在 $T=4$ 达 93.21% 峰值。",
     role:"超参（时间）"
   },
   "tau": {
@@ -200,14 +200,14 @@ const GLOSSARY = {
     tex:"h_{\\mathrm{edge}}",
     name:"边同质率 · Edge homophily ratio",
     formula:"h_{\\mathrm{edge}} = \\frac{|\\{(u,v)\\in E\\,:\\,y_u=y_v\\}|}{|E|}",
-    desc:"论文 Definition 1 / Eq.6 —— 同质边（两端同类）占总边数的比例。\n$h_{\\mathrm{edge}}=1$：完全同质（所有边连接同类节点，Cora 接近此）。\n$h_{\\mathrm{edge}}=0$：完全异质（所有边跨类，Roman-empire 接近此）。\nCDE 论文 Figure 1 在合成图上把 $h$ 从 0.1 扫到 0.9，证明 CDE 在 $h<0.5$ 区段显著优于 GRAND/GCN/ACM-GCN。",
+    desc:"论文 Definition 1 / Eq.6：同质边（两端同类）占总边数的比例。\n$h_{\\mathrm{edge}}=1$：完全同质（所有边连接同类节点，Cora 接近此）。\n$h_{\\mathrm{edge}}=0$：完全异质（所有边跨类，Roman-empire 接近此）。\nCDE 论文 Figure 1 在合成图上把 $h$ 从 0.1 扫到 0.9，证明 CDE 在 $h<0.5$ 区段显著优于 GRAND/GCN/ACM-GCN。",
     role:"图属性"
   },
   "hadj": {
     tex:"h_{\\mathrm{adj}}",
     name:"调整同质率 · Adjusted homophily",
     formula:"h_{\\mathrm{adj}} = \\frac{h_{\\mathrm{edge}}-\\sum_{k=1}^C D_k^2/(2|E|)^2}{1-\\sum_{k=1}^C D_k^2/(2|E|)^2}",
-    desc:"论文 Definition 2 / Eq.7（Platonov et al. 2022）—— 标准 $h_{\\mathrm{edge}}$ 对类别数和类别不平衡敏感，无法跨数据集公平比较。\n$h_{\\mathrm{adj}}$ 减去随机连接的期望（与 modularity 类似），让不同 $C$ 和不平衡数据集可比。\n负值表示「比随机更异质」（Roman-empire $h_{\\mathrm{adj}}=-0.05$，Wiki-cooc $-0.03$）；越接近 $1$ 越同质。\n论文 Table 2：CDE 在 $h_{\\mathrm{adj}}$ 越低的数据集改进越大。",
+    desc:"论文 Definition 2 / Eq.7（Platonov et al. 2022）： 标准 $h_{\\mathrm{edge}}$ 对类别数和类别不平衡敏感，无法跨数据集公平比较。\n$h_{\\mathrm{adj}}$ 减去随机连接的期望（与 modularity 类似），让不同 $C$ 和不平衡数据集可比。\n负值表示「比随机更异质」（Roman-empire $h_{\\mathrm{adj}}=-0.05$，Wiki-cooc $-0.03$）；越接近 $1$ 越同质。\n论文 Table 2：CDE 在 $h_{\\mathrm{adj}}$ 越低的数据集改进越大。",
     role:"图属性（标准化）"
   },
 
@@ -216,70 +216,70 @@ const GLOSSARY = {
     tex:"\\text{Eq.1}",
     name:"热扩散方程（连续）· Heat equation",
     formula:"\\frac{\\partial x}{\\partial t} = \\mathrm{div}(D\\,\\nabla x),\\;\\;t>0",
-    desc:"论文 Eq.1 / 经典物理 —— 热量沿浓度梯度均匀扩散。\n$D$ 是 thermal diffusivity（介质决定）。\n核心物理：信息从高浓度区流向低浓度区，最终全场趋于均匀。\n图 GNN 视角：这就是 GCN/GRAND 的连续极限。$D=$ 邻接矩阵时退化为标准 graph Laplacian smoothing。\n问题（paper line 41-44 + 67-79）：异质图上把不该融合的邻居信息也融合了 → over-smoothing → 「fail to optimally utilize information in heterophilic graph datasets」→ 需要加对流项。",
+    desc:"论文 Eq.1 / 经典物理：热量沿浓度梯度均匀扩散。\n$D$ 是 thermal diffusivity（介质决定）。\n核心物理：信息从高浓度区流向低浓度区，最终全场趋于均匀。\n图 GNN 视角：这就是 GCN/GRAND 的连续极限。$D=$ 邻接矩阵时退化为标准 graph Laplacian smoothing。\n问题（paper line 41-44 + 67-79）：异质图上把不该融合的邻居信息也融合了 → over-smoothing → 「fail to optimally utilize information in heterophilic graph datasets」→ 需要加对流项。",
     role:"基础 PDE（baseline）"
   },
   "Eq2CDE": {
     tex:"\\text{Eq.2}",
     name:"对流-扩散方程 · Convection-Diffusion ★",
     formula:"\\frac{\\partial x}{\\partial t} = \\mathrm{div}(D\\,\\nabla x) - \\mathrm{div}(\\mathbf v\\,x)",
-    desc:"论文 Eq.2 —— CDE 的连续形式。\n第一项 $\\mathrm{div}(D\\nabla x)$：扩散，沿浓度梯度（与 heat 方程相同）。\n第二项 $-\\mathrm{div}(\\mathbf v x)$：对流，沿速度场 $\\mathbf v$ 定向流动。\n经典物理例子：海水温度演化 = 扩散（热传导）+ 对流（洋流带走热量）。\n关键：当 $\\mathbf v\\equiv 0$ 时退化为 heat 方程；CDE 把 $\\mathbf v$ 学成 per-edge 的 $V_{ij}$（Eq.10），就能处理异质图。",
+    desc:"论文 Eq.2：CDE 的连续形式。\n第一项 $\\mathrm{div}(D\\nabla x)$：扩散，沿浓度梯度（与 heat 方程相同）。\n第二项 $-\\mathrm{div}(\\mathbf v x)$：对流，沿速度场 $\\mathbf v$ 定向流动。\n经典物理例子：海水温度演化 = 扩散（热传导）+ 对流（洋流带走热量）。\n关键：当 $\\mathbf v\\equiv 0$ 时退化为 heat 方程；CDE 把 $\\mathbf v$ 学成 per-edge 的 $V_{ij}$（Eq.10），就能处理异质图。",
     role:"CDE 灵魂（Eq.2）"
   },
   "Eq3Grad": {
     tex:"\\text{Eq.3}",
     name:"图梯度（离散化）",
     formula:"(\\nabla X(t))_{ij} = x_j(t) - x_i(t),\\;\\forall(i,j)\\in E",
-    desc:"论文 Eq.3 —— 连续梯度 $\\nabla x$ 在图上离散化为「边上的特征差」。\n这个看似简单的离散化是 GRAND 框架的关键：连续 PDE → 图上离散动力系统 → ODE → 数值求解 → 端到端可训。",
+    desc:"论文 Eq.3：连续梯度 $\\nabla x$ 在图上离散化为「边上的特征差」。\n这个看似简单的离散化是 GRAND 框架的关键：连续 PDE → 图上离散动力系统 → ODE → 数值求解 → 端到端可训。",
     role:"图离散化（Eq.3）"
   },
   "Eq4Div": {
     tex:"\\text{Eq.4}",
     name:"图散度（离散化）",
     formula:"(\\mathrm{div}\\,\\mathcal X)_i = \\textstyle\\sum_{j:(i,j)\\in E}\\mathcal X_{ij}",
-    desc:"论文 Eq.4 —— 边上量在节点处的「流出净量」。\n图上散度 = 邻居聚合（neighbor sum）—— 这就是 GNN 的核心操作。\n配合 Eq.3 图梯度，得到 GNN 的 PDE 解释：每个 GNN message-passing layer 是 PDE 一个时间步的 Euler 离散。",
+    desc:"论文 Eq.4：边上量在节点处的「流出净量」。\n图上散度 = 邻居聚合（neighbor sum）： 这就是 GNN 的核心操作。\n配合 Eq.3 图梯度，得到 GNN 的 PDE 解释：每个 GNN message-passing layer 是 PDE 一个时间步的 Euler 离散。",
     role:"图离散化（Eq.4）"
   },
   "Eq5GRAND": {
     tex:"\\text{Eq.5}",
     name:"GRAND 动力学",
     formula:"\\frac{dX(t)}{dt} = \\mathrm{div}(D(X(t),t)\\odot\\nabla X(t)) = \\bigl(A(X(t)) - I\\bigr)\\,X(t)",
-    desc:"论文 Eq.5（Chamberlain 2021a, GRAND）—— 把 heat 方程用 Eq.3-4 在图上离散得到的形式。\n两个等价写法：\n  · 一般形式：$\\mathrm{div}(D\\odot\\nabla X)$\n  · 矩阵形式：$(A(X)-I)X$，其中 $A_{ij}=a(x_i,x_j)$ 是可学习相似度\n这是 CDE 的扩散项基础，可以选 GRAND-LAP / GAT / TRANS / GraphBel 四种实现。\nCDE 的全部贡献是在 Eq.5 之上加对流项（Eq.8-9）。",
+    desc:"论文 Eq.5（Chamberlain 2021a, GRAND）： 把 heat 方程用 Eq.3-4 在图上离散得到的形式。\n两个等价写法：\n  · 一般形式：$\\mathrm{div}(D\\odot\\nabla X)$\n  · 矩阵形式：$(A(X)-I)X$，其中 $A_{ij}=a(x_i,x_j)$ 是可学习相似度\n这是 CDE 的扩散项基础，可以选 GRAND-LAP / GAT / TRANS / GraphBel 四种实现。\nCDE 的全部贡献是在 Eq.5 之上加对流项（Eq.8-9）。",
     role:"baseline 动力学（Eq.5）"
   },
   "Eq8CDEGraph": {
     tex:"\\text{Eq.8}",
     name:"图上 CDE",
     formula:"\\frac{\\partial X}{\\partial t} = \\mathrm{div}(D(X(t),t)\\odot\\nabla X(t)) + \\mathrm{div}(V(t)\\odot X(t))",
-    desc:"论文 Eq.8 —— CDE 在图上的最终形式。\n第一项 = GRAND 的扩散（Eq.5）。\n第二项 = CDE 新加的对流项（Eq.9 展开）。\n这是 plug-in 设计的精髓：第一项可以是 LAP/GAT/TRANS/GraphBel 四种之一，第二项是 CDE 的全部贡献。\n论文 Table 4：四种 baseline 加 CDE 对流都能稳定提升。",
+    desc:"论文 Eq.8：CDE 在图上的最终形式。\n第一项 = GRAND 的扩散（Eq.5）。\n第二项 = CDE 新加的对流项（Eq.9 展开）。\n这是 plug-in 设计的精髓：第一项可以是 LAP/GAT/TRANS/GraphBel 四种之一，第二项是 CDE 的全部贡献。\n论文 Table 4：四种 baseline 加 CDE 对流都能稳定提升。",
     role:"CDE 主方程（Eq.8）"
   },
   "Eq9Conv": {
     tex:"\\text{Eq.9}",
     name:"对流项展开",
     formula:"(\\mathrm{div}(V(t)\\odot X(t)))_i = \\textstyle\\sum_{j:(i,j)\\in E}V_{ij}(t)\\odot x_j(t)",
-    desc:"论文 Eq.9 —— 对流项在节点 $i$ 处的展开式。\n直接读：节点 $i$ 收到的「对流贡献」是其所有邻居特征 $x_j$ 与对应边速度 $V_{ij}$ 的逐元素积之和。\n对比扩散项：$\\sum_j D_{ij}(x_j-x_i)$（特征差求和）vs $\\sum_j V_{ij}\\odot x_j$（特征本身加权和）。\n后者让信息可以「逆梯度」流动 —— 异质边上 $V_{ij}$ 大，可以反向重定向。\n⚠️ 论文 Appendix B 把这里写成 $V_{ij}\\odot x_i$（⊙ 自己），与主文 Eq.9 矛盾 —— 经查官方 code（function_laplacian_convection.py 第 81-82 行注释明示「v_ij elementwise product with x_j」），主文 Eq.9 是对的，Appendix B 是 typo。",
+    desc:"论文 Eq.9：对流项在节点 $i$ 处的展开式。\n直接读：节点 $i$ 收到的「对流贡献」是其所有邻居特征 $x_j$ 与对应边速度 $V_{ij}$ 的逐元素积之和。\n对比扩散项：$\\sum_j D_{ij}(x_j-x_i)$（特征差求和）vs $\\sum_j V_{ij}\\odot x_j$（特征本身加权和）。\n后者让信息可以「逆梯度」流动：异质边上 $V_{ij}$ 大，可以反向重定向。\n⚠️ 论文 Appendix B 把这里写成 $V_{ij}\\odot x_i$（⊙ 自己），与主文 Eq.9 矛盾：经查官方 code（function_laplacian_convection.py 第 81-82 行注释明示「v_ij elementwise product with x_j」），主文 Eq.9 是对的，Appendix B 是 typo。",
     role:"对流离散（Eq.9）"
   },
   "Eq10Velocity": {
     tex:"\\text{Eq.10}\\,\\bigstar",
     name:"速度的 learnable 公式 ★★",
     formula:"V_{ij}(t) = \\sigma\\bigl(W\\,(x_j(t) - x_i(t))\\bigr)",
-    desc:"论文 Eq.10（Sec. 4.1，line 361-372）—— CDE method 的核心定义，paper 称之为「simple yet effective velocity formulation」。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数。\nPaper 原话解读（line 366-372）：\n  · $V_{ij}$ 决定从邻居 $j$ 到节点 $i$ 的「优先信息输运方向」\n  · $V$ 不一定与 $x_j-x_i$ 同向（line 368-369：「the velocity is not always in the same direction as the difference」），因 $W$ 与 $\\sigma$ 都可学\n  · 这种灵活性正是异质图所需的（line 370-372）\n参数效率：$W$ 只 $r^2$ 个参数就能控制 $|E|$ 条边的速度，不需要每边独立参数化。\n📌 Code 实际 vs Paper：\n  · Paper Eq.10 写一般 $\\sigma$；官方 code 实际是 $\\mathrm{ReLU}$（4 个 convection 文件统一）\n  · Code 写 $\\mathrm{ReLU}(W(x_i-x_j))$（方向反），但 $W$ 可学，效果等价于 paper 写法\n  · LapConv code 还多了个标量门控 $a_{ij}=\\tanh(\\mathrm{gate}([x_i\\|x_j]))$ 乘在 $V_{ij}\\odot x_j$ 之前（paper 没明写）\nplayground 用 random Gaussian $W$ + $\\sigma=\\tanh$ 作 toy seed；论文是端到端从分类 loss 反传梯度学。",
+    desc:"论文 Eq.10（Sec. 4.1，line 361-372）： CDE method 的核心定义，paper 称之为「simple yet effective velocity formulation」。\n$W\\in\\mathbb R^{r\\times r}$ 是可学习矩阵，$\\sigma$ 是激活函数。\nPaper 原话解读（line 366-372）：\n  · $V_{ij}$ 决定从邻居 $j$ 到节点 $i$ 的「优先信息输运方向」\n  · $V$ 不一定与 $x_j-x_i$ 同向（line 368-369：「the velocity is not always in the same direction as the difference」），因 $W$ 与 $\\sigma$ 都可学\n  · 这种灵活性正是异质图所需的（line 370-372）\n参数效率：$W$ 只 $r^2$ 个参数就能控制 $|E|$ 条边的速度，不需要每边独立参数化。\n📌 Code 实际 vs Paper：\n  · Paper Eq.10 写一般 $\\sigma$；官方 code 实际是 $\\mathrm{ReLU}$（4 个 convection 文件统一）\n  · Code 写 $\\mathrm{ReLU}(W(x_i-x_j))$（方向反），但 $W$ 可学，效果等价于 paper 写法\n  · LapConv code 还多了个标量门控 $a_{ij}=\\tanh(\\mathrm{gate}([x_i\\|x_j]))$ 乘在 $V_{ij}\\odot x_j$ 之前（paper 没明写）\nplayground 用 random Gaussian $W$ + $\\sigma=\\tanh$ 作 toy seed；论文是端到端从分类 loss 反传梯度学。",
     role:"CDE 灵魂（Eq.10 ★★）"
   },
   "Eq11AttnTRANS": {
     tex:"\\text{Eq.11}",
     name:"GRAND-TRANS attention",
     formula:"a(x_i,x_j) = \\mathrm{softmax}\\!\\left(\\tfrac{(W_K x_i)^\\top W_Q x_j}{\\sqrt{d_k}}\\right)",
-    desc:"论文 Eq.11 —— Transformer 风格的 scaled dot-product attention。\n$W_K, W_Q$ 可学习；$d_k$ 是 key/query 维度（超参）。\n四种 attention 之一（与 GAT、LAP、GraphBel 并列）。\nGRAND-TRANS + CDE 对流 = CDE-GRAND-TRANS（论文 Table 4）。",
+    desc:"论文 Eq.11：Transformer 风格的 scaled dot-product attention。\n$W_K, W_Q$ 可学习；$d_k$ 是 key/query 维度（超参）。\n四种 attention 之一（与 GAT、LAP、GraphBel 并列）。\nGRAND-TRANS + CDE 对流 = CDE-GRAND-TRANS（论文 Table 4）。",
     role:"Attention 变体"
   },
   "Eq12AttnGAT": {
     tex:"\\text{Eq.12}",
     name:"GRAND-GAT attention",
     formula:"a(x_i,x_j) = \\frac{\\exp(\\mathrm{LeakyReLU}(\\mathbf a^\\top[Wx_i\\|Wx_j]))}{\\sum_{k\\in\\mathcal N_i}\\exp(\\mathrm{LeakyReLU}(\\mathbf a^\\top[Wx_i\\|Wx_k]))}",
-    desc:"论文 Eq.12 —— GAT 风格 attention（Veličković 2018）。\n$W, \\mathbf a$ 可学习；$\\|$ 是拼接。\n比 TRANS 更早（GAT 2018 vs Transformer-style 2021），效果在不同图上各有优劣。\nplayground 在 Tweaks 面板会让用户切换四种 attention 看 ACC 变化。",
+    desc:"论文 Eq.12：GAT 风格 attention（Veličković 2018）。\n$W, \\mathbf a$ 可学习；$\\|$ 是拼接。\n比 TRANS 更早（GAT 2018 vs Transformer-style 2021），效果在不同图上各有优劣。\nplayground 在 Tweaks 面板会让用户切换四种 attention 看 ACC 变化。",
     role:"Attention 变体"
   },
 
@@ -288,7 +288,7 @@ const GLOSSARY = {
     tex:"\\text{Eq.14}",
     name:"GraphBel diffusion (Appendix A)",
     formula:"\\frac{dX(t)}{dt} = \\bigl(A_S(X(t))\\odot B_S(X(t)) - \\Psi(X(t))\\bigr)\\,X(t)",
-    desc:"论文 Appendix A line 1443-1453 —— GraphBel 是 Beltrami / mean curvature / heat flow 的统一推广（Song et al. 2022）。\n  · $A_S(\\cdot)$ 是 learnable attention 函数\n  · $B_S(\\cdot)$ 是 normalized vector map\n  · $\\Psi(X)$ 是对角矩阵，$\\Psi(x_i,x_i)=\\sum_{x_j}(A\\odot B)(x_i,x_j)$\nGraphBel 是 CDE plug-in 哲学下能配的扩散 baseline 之一（与 GRAND-LAP/GAT/TRANS 并列）。\nTable 4 显示 CDE-GraphBel 比 GraphBel baseline 在异质数据集上显著提升。",
+    desc:"论文 Appendix A line 1443-1453：GraphBel 是 Beltrami / mean curvature / heat flow 的统一推广（Song et al. 2022）。\n  · $A_S(\\cdot)$ 是 learnable attention 函数\n  · $B_S(\\cdot)$ 是 normalized vector map\n  · $\\Psi(X)$ 是对角矩阵，$\\Psi(x_i,x_i)=\\sum_{x_j}(A\\odot B)(x_i,x_j)$\nGraphBel 是 CDE plug-in 哲学下能配的扩散 baseline 之一（与 GRAND-LAP/GAT/TRANS 并列）。\nTable 4 显示 CDE-GraphBel 比 GraphBel baseline 在异质数据集上显著提升。",
     role:"扩散 baseline (Appendix A)"
   },
 
@@ -296,7 +296,7 @@ const GLOSSARY = {
     tex:"\\text{Eq.15}",
     name:"Neural Sheaf Diffusion",
     formula:"\\frac{dX(t)}{dt} = -\\sigma\\bigl(\\Delta_{F(t)}(I_n\\otimes W_1)X(t)W_2\\bigr)",
-    desc:"论文 Appendix A line 1454-1478 —— Bodnar et al. 2022 的 sheaf diffusion。\n$\\Delta_{F(t)}$ 是 sheaf Laplacian，由 learnable function 决定 $F(t)=g(G,X(t);\\theta)$；$W_1,W_2$ 是权重矩阵；$\\otimes$ 是 Kronecker 积。\n时间离散版（Eq.16）：$X_{t+1} = (1+\\varepsilon)X_t - \\sigma(\\Delta_{F(t)}(I\\otimes W_1^t)X_t W_2^t)$，$\\varepsilon\\in[-1,1]^d$ 也可学。\n设计目标（line 1468-1469）：处理异质图 + 缓解 over-smoothing。paper Table 4 列入 baseline 对比。",
+    desc:"论文 Appendix A line 1454-1478：Bodnar et al. 2022 的 sheaf diffusion。\n$\\Delta_{F(t)}$ 是 sheaf Laplacian，由 learnable function 决定 $F(t)=g(G,X(t);\\theta)$；$W_1,W_2$ 是权重矩阵；$\\otimes$ 是 Kronecker 积。\n时间离散版（Eq.16）：$X_{t+1} = (1+\\varepsilon)X_t - \\sigma(\\Delta_{F(t)}(I\\otimes W_1^t)X_t W_2^t)$，$\\varepsilon\\in[-1,1]^d$ 也可学。\n设计目标（line 1468-1469）：处理异质图 + 缓解 over-smoothing。paper Table 4 列入 baseline 对比。",
     role:"扩散 baseline (Appendix A)"
   },
 
@@ -312,7 +312,7 @@ const GLOSSARY = {
     tex:"\\text{CDE}",
     name:"对流-扩散（概念）★",
     formula:"\\partial x/\\partial t = \\mathrm{div}(D\\nabla x) - \\mathrm{div}(\\mathbf v\\,x)",
-    desc:"经典流体力学 —— 流体里同时有扩散（浓度梯度驱动）和对流（速度场驱动）。\n论文 Sec. 3.1 海洋类比（line 219-223）：海水中 $x$ 是热浓度，$\\mathbf v$ 是洋流。\nSec. 4 (line 325-340) 进一步类比：同质图像固体材料（粒子受连接束缚，热扩散主导），异质图像气/液材料（粒子运动自由，必须有对流项）。\nCDE GNN 把这套 PDE 搬到图上：扩散项处理同质邻居（信息聚合），对流项处理异质邻居（信息重定向）。\n比 heat 方程严格更一般 —— heat 是 $\\mathbf v=0$ 的特例。",
+    desc:"经典流体力学：流体里同时有扩散（浓度梯度驱动）和对流（速度场驱动）。\n论文 Sec. 3.1 海洋类比（line 219-223）：海水中 $x$ 是热浓度，$\\mathbf v$ 是洋流。\nSec. 4 (line 325-340) 进一步类比：同质图像固体材料（粒子受连接束缚，热扩散主导），异质图像气/液材料（粒子运动自由，必须有对流项）。\nCDE GNN 把这套 PDE 搬到图上：扩散项处理同质邻居（信息聚合），对流项处理异质邻居（信息重定向）。\n比 heat 方程严格更一般：heat 是 $\\mathbf v=0$ 的特例。",
     role:"核心概念 ★"
   },
   "ODESolverEuler": {
@@ -342,7 +342,7 @@ const GLOSSARY = {
     tex:"\\text{ACMP vs CDE}",
     name:"ACMP vs CDE 设计对比",
     formula:"\\partial_t x_i = \\alpha\\!\\odot\\!\\sum_j(a-\\beta)(x_j-x_i) + \\delta\\odot x_i\\odot(1-x_i\\odot x_i)\\;\\;\\text{(ACMP)}",
-    desc:"论文 Sec. 2.2 line 169-170 + Appendix B line 1487-1530 —— paper 主动给出的与 ACMP（Wang et al. 2023b, Allen-Cahn message passing）的设计对比。\n方程对比（line 1499-1507）：\n  · CDE: $\\partial_t x_i = \\sum_j a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$\n  · ACMP: 受 particle reaction-diffusion 启发，用 repulsive/attractive 力（公式见 chip formula 处）\n核心差异（line 1517-1530）：\n  1. ACMP 只有 2 方向（$\\pm(x_j-x_i)$）；CDE 通过 $W,\\sigma$ 灵活方向\n  2. ACMP 是 vector-wise 加权和；CDE 是 channel-wise 调制（每维独立比例）\n  3. paper 论点：「even if neighboring nodes generally have different features in heterophily, their features in some dimensions may still be close」→ channel-wise 调制能捕捉这种细粒度\npaper 结论 line 1513：「Our model surpasses ACMP on all the heterophilic datasets」。\n⚠️ 注意：line 1502 的 CDE 公式再次用了 $\\odot x_i$（与主文 Eq.9 矛盾），这是 Appendix B typo 的第二处出现 —— 见 AppendixBTypo chip。",
+    desc:"论文 Sec. 2.2 line 169-170 + Appendix B line 1487-1530：paper 主动给出的与 ACMP（Wang et al. 2023b, Allen-Cahn message passing）的设计对比。\n方程对比（line 1499-1507）：\n  · CDE: $\\partial_t x_i = \\sum_j a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$\n  · ACMP: 受 particle reaction-diffusion 启发，用 repulsive/attractive 力（公式见 chip formula 处）\n核心差异（line 1517-1530）：\n  1. ACMP 只有 2 方向（$\\pm(x_j-x_i)$）；CDE 通过 $W,\\sigma$ 灵活方向\n  2. ACMP 是 vector-wise 加权和；CDE 是 channel-wise 调制（每维独立比例）\n  3. paper 论点：「even if neighboring nodes generally have different features in heterophily, their features in some dimensions may still be close」→ channel-wise 调制能捕捉这种细粒度\npaper 结论 line 1513：「Our model surpasses ACMP on all the heterophilic datasets」。\n⚠️ 注意：line 1502 的 CDE 公式再次用了 $\\odot x_i$（与主文 Eq.9 矛盾），这是 Appendix B typo 的第二处出现：见 AppendixBTypo chip。",
     role:"方法对比 (Sec. 2.2 + App.B)"
   },
 
@@ -351,7 +351,7 @@ const GLOSSARY = {
     tex:"\\alpha,\\,\\beta",
     name:"GRAND-style 残差 ODE · Residual ODE function",
     formula:"f(X) = \\alpha\\,(\\,\\mathrm{ax}-X\\,) + \\beta\\,X(0)",
-    desc:"论文主文没明写，但官方 code 里 ODE function 不是直接 $dX/dt = \\mathrm{ax}$，而是 GRAND 风格的残差：\n  · $\\alpha = \\mathrm{sigmoid}(\\alpha_{\\mathrm{train}})$ —— 可学习标量，控制扩散+对流的整体步长\n  · $\\beta\\,X(0)$ —— optional source term，把初始态 $X(0)$ 作为持续注入项（防止 $X(t)$ 远离原始特征过远）\nCode (function_*_convection.py)：\n```\nf = alpha * (ax - x)\nif add_source:\n    f += beta_train * x_0\n```\n论文 Table 8 显示 hetero datasets 大部分启用 `add_source=True` —— 暗示这个残差项对异质性能贡献显著。",
+    desc:"论文主文没明写，但官方 code 里 ODE function 不是直接 $dX/dt = \\mathrm{ax}$，而是 GRAND 风格的残差：\n  · $\\alpha = \\mathrm{sigmoid}(\\alpha_{\\mathrm{train}})$：可学习标量，控制扩散+对流的整体步长\n  · $\\beta\\,X(0)$：optional source term，把初始态 $X(0)$ 作为持续注入项（防止 $X(t)$ 远离原始特征过远）\nCode (function_*_convection.py)：\n```\nf = alpha * (ax - x)\nif add_source:\n    f += beta_train * x_0\n```\n论文 Table 8 显示 hetero datasets 大部分启用 `add_source=True`：暗示这个残差项对异质性能贡献显著。",
     role:"ODE function 工程细节"
   },
 
@@ -359,7 +359,7 @@ const GLOSSARY = {
     tex:"W_{\\mathrm{low}},\\,W_{\\mathrm{high}}",
     name:"频谱解耦 · Spectral path split",
     formula:"\\mathrm{ax} = (\\,\\lambda_1\\cdot\\mathrm{ax}_{\\mathrm{conv}}\\,W_{\\mathrm{high}}\\,) + (\\,\\mathrm{ax}_{\\mathrm{diff}}\\,W_{\\mathrm{low}}\\,)",
-    desc:"📌 论文完全没提，但 code 里**核心**的设计：扩散贡献和对流贡献走两条独立的输出投影路径。\n  · 扩散贡献 $\\mathrm{ax}_{\\mathrm{diff}}$ → $W_{\\mathrm{low}}$ 矩阵（保留低频）\n  · 对流贡献 $\\mathrm{ax}_{\\mathrm{conv}}$ → $W_{\\mathrm{high}}$ 矩阵（放大高频）\n  · GAT/Trans Conv 还多一个可学习标量 $\\lambda_1$ 控制对流整体强度（LapConv 没有）\n频谱视角：heat diffusion 是低通滤波器（让所有节点趋同），CDE 加的对流项相当于高通滤波器（保留差异）。两条路径独立学习能让模型自适应平衡同质与异质信号。\n这是为什么 CDE 能在完全同质的图上也不严重降低性能（论文 Sec. 5.3 提到 Cora/Pubmed 上 CDE-GRAND 与 GRAND 相当）：$W_{\\mathrm{high}}$ 可以学到接近零，让对流贡献不干扰扩散。",
+    desc:"📌 论文完全没提，但 code 里属于核心的设计：扩散贡献和对流贡献走两条独立的输出投影路径。\n  · 扩散贡献 $\\mathrm{ax}_{\\mathrm{diff}}$ → $W_{\\mathrm{low}}$ 矩阵（保留低频）\n  · 对流贡献 $\\mathrm{ax}_{\\mathrm{conv}}$ → $W_{\\mathrm{high}}$ 矩阵（放大高频）\n  · GAT/Trans Conv 还多一个可学习标量 $\\lambda_1$ 控制对流整体强度（LapConv 没有）\n频谱视角：heat diffusion 是低通滤波器（让所有节点趋同），CDE 加的对流项相当于高通滤波器（保留差异）。两条路径独立学习能让模型自适应平衡同质与异质信号。\n这是为什么 CDE 能在完全同质的图上也不严重降低性能（论文 Sec. 5.3 提到 Cora/Pubmed 上 CDE-GRAND 与 GRAND 相当）：$W_{\\mathrm{high}}$ 可以学到接近零，让对流贡献不干扰扩散。",
     role:"频谱解耦"
   },
 
@@ -375,7 +375,7 @@ const GLOSSARY = {
     tex:"\\text{App.B}",
     name:"Appendix B 的 typo 警告",
     formula:"",
-    desc:"⚠️ 阅读论文时容易踩的坑：\n论文主文 Eq.9：$(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（⊙ $x_j$）\nAppendix B 写：$\\partial_t x_i = \\sum a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$（⊙ $x_i$）\n并配文字「we dot product this flow with $x_i$」。\n两者矛盾。哪个是对的？\n→ 看 code：`x_new = F.relu(W(x_i-x_j)) * dst_k`，且代码注释明示「v_ij elementwise product with $x_j$ in the paper」。\n→ 主文 Eq.9 是对的；**Appendix B 是 typo**（多处「x_i」应该是「x_j」）。\nplayground 按主文 Eq.9 实现。这是阅读 paper 时容易困惑的细节。",
+    desc:"⚠️ 阅读论文时容易踩的坑：\n论文主文 Eq.9：$(\\mathrm{div}(V\\odot X))_i = \\sum_{j\\in N(i)} V_{ij}\\odot x_j$（⊙ $x_j$）\nAppendix B 写：$\\partial_t x_i = \\sum a(x_i,x_j)(x_j-x_i) + \\sigma(W(x_j-x_i))\\odot x_i$（⊙ $x_i$）\n并配文字「we dot product this flow with $x_i$」。\n两者矛盾。哪个是对的？\n→ 看 code：`x_new = F.relu(W(x_i-x_j)) * dst_k`，且代码注释明示「v_ij elementwise product with $x_j$ in the paper」。\n→ 主文 Eq.9 是对的；Appendix B 是 typo（多处「x_i」应该是「x_j」）。\nplayground 按主文 Eq.9 实现。这是阅读 paper 时容易困惑的细节。",
     role:"Paper 注解"
   },
 
@@ -383,7 +383,7 @@ const GLOSSARY = {
     tex:"\\mathrm{Path\\text{-}best}",
     name:"⚠ 测试时路径选优 · Path-best test selection",
     formula:"\\hat y = f_{\\mathrm{cls}}\\bigl(X(t^{*})\\bigr),\\quad t^{*}=\\arg\\max_{t\\in[0,\\,3T]}\\;\\mathrm{ValAcc}(X(t))",
-    desc:"⚠️ 这是 paper Sec. 5 完全没明说但 code 默认启用的「隐藏技巧」，对解读 Table 2 的 +20% 数字至关重要。\n📌 三层细节（来自 early_stop_solver.py + run_GNN_raw.py 第 167 行）：\n  ① 默认启用：`run_GNN_raw.py:167` 的 `model = GNNhe if no_early else GNNheter` —— 默认走 GNNheter（带 EarlyStopInt）；要关掉得显式 `--no_early`\n  ② 测试时 ODE 跑 3T 不是 T：`EarlyStopInt.t = [0, earlystopxT * T]`，`earlystopxT` 默认 3.0（line 291）。训练时 T=1.0，测试时 ODE 实际跑到 t=3.0，从更长路径上选\n  ③ 双层 best：`run_GNN_raw.py:201-206` —— epoch best vs ODE-path best 取较大值。前者跨 epoch 选最佳，后者单次 ODE forward 内跨 t 选最佳\n所以 paper Table 2 的 ACC 不是「X(T) endpoint 分类准确率」，而是「t∈[0, 3T] 路径上 val-best 时刻 t* 的 X(t*) 分类准确率」。\n这是合法的 model selection（用 val_mask 不是 test_mask 选 t*），但 paper 主文 Algorithm 1 写「step 3: return X(T)」误导读者以为是 endpoint。\n📌 Hetero datasets 的 best_params 没明确设 earlystopxT，意味着用默认 3.0；homo datasets（如 Pubmed）显式设 5.0。\nplayground 没实现这个机制（toy 太小不需要），但 popover 应让读者意识到 paper 数字的实际含义。",
+    desc:"⚠️ 这是 paper Sec. 5 完全没明说但 code 默认启用的「隐藏技巧」，对解读 Table 2 的 +20% 数字至关重要。\n📌 三层细节（来自 early_stop_solver.py + run_GNN_raw.py 第 167 行）：\n  ① 默认启用：`run_GNN_raw.py:167` 的 `model = GNNhe if no_early else GNNheter`：默认走 GNNheter（带 EarlyStopInt）；要关掉得显式 `--no_early`\n  ② 测试时 ODE 跑 3T 不是 T：`EarlyStopInt.t = [0, earlystopxT * T]`，`earlystopxT` 默认 3.0（line 291）。训练时 T=1.0，测试时 ODE 实际跑到 t=3.0，从更长路径上选\n  ③ 双层 best：`run_GNN_raw.py:201-206`：epoch best vs ODE-path best 取较大值。前者跨 epoch 选最佳，后者单次 ODE forward 内跨 t 选最佳\n所以 paper Table 2 的 ACC 不是「X(T) endpoint 分类准确率」，而是「t∈[0, 3T] 路径上 val-best 时刻 t* 的 X(t*) 分类准确率」。\n这是合法的 model selection（用 val_mask 不是 test_mask 选 t*），但 paper 主文 Algorithm 1 写「step 3: return X(T)」误导读者以为是 endpoint。\n📌 Hetero datasets 的 best_params 没明确设 earlystopxT，意味着用默认 3.0；homo datasets（如 Pubmed）显式设 5.0。\nplayground 没实现这个机制（toy 太小不需要），但 popover 应让读者意识到 paper 数字的实际含义。",
     role:"Paper 隐藏技巧"
   },
 };
@@ -496,13 +496,13 @@ function InlineMath({ text }) {
   </>;
 }
 
-// Featured chips — DGAC's was DE (狄利克雷能量); CDE's is Eq.10 (the velocity formula
-// — the entire paper's contribution in a single line)
+// Featured chips，DGAC's was DE (狄利克雷能量); CDE's is Eq.10 (the velocity formula
+//，the entire paper's contribution in a single line)
 const FEATURED_CHIPS = new Set(["Eq10Velocity"]);
-// Warning chips — paper-vs-code discrepancies / typos / "be careful" notes
+// Warning chips，paper-vs-code discrepancies / typos / "be careful" notes
 // rendered with an orange ⚠ style so readers don't miss the gotcha
 const WARNING_CHIPS = new Set(["AppendixBTypo", "EarlyStopPath"]);
-// Code-only chips — engineering details surfaced from official code, not in paper.
+// Code-only chips，engineering details surfaced from official code, not in paper.
 // Rendered with a subtle 📌 prefix in a slightly different palette.
 const CODE_CHIPS    = new Set(["AlphaBetaResidual","OutputLowHigh","EdgeAttention1"]);
 
@@ -842,7 +842,7 @@ function FormulaPanel({ step, tweaks }) {
   const close = () => setPop({id:null, anchor:null});
 
   const id = step.id;
-  // Color theme — diffusion blue / convection amber / fusion violet / output green / loss slate
+  // Color theme，diffusion blue / convection amber / fusion violet / output green / loss slate
   const A_DIFF = "oklch(0.55 0.13 250)";
   const A_CONV = "oklch(0.58 0.13 35)";
   const A_VEL  = "oklch(0.52 0.13 300)";
@@ -861,7 +861,7 @@ function FormulaPanel({ step, tweaks }) {
         </span>
       </div>
 
-      {/* step 1: input — 带属性图 G + X(0) */}
+      {/* step 1: input，带属性图 G + X(0) */}
       <Block active={id==="init"} color="#3d3a35" eyebrow="输入 · INPUT"
         onOpen={open} syms={["G","V","E","weight","N","r","Xt","xi","yu"]}>
         <Eq hl={id==="init"}
@@ -870,17 +870,17 @@ function FormulaPanel({ step, tweaks }) {
           tex="x_i(t)\in\mathbb R^r,\;\; t\in[0,T]"/>
       </Block>
 
-      {/* step 2: encode — 物理直觉 heat vs CDE */}
+      {/* step 2: encode，物理直觉 heat vs CDE */}
       <Block active={id==="intuition"} color={A_CONV} eyebrow="物理直觉 · HEAT vs CDE"
         onOpen={open} syms={["Eq1Heat","Eq2CDE","HeatDiffusion","ConvectionDiffusion","partt","divOp","nablaOp","Dmatrix","Vmatrix"]}
-        note="一杯静水 vs 一条河 —— 同一滴墨水，纯扩散和扩散+对流两种命运。CDE 把河流物理学搬到图上。">
+        note="一杯静水 vs 一条河：同一滴墨水，纯扩散和扩散+对流两种命运。CDE 把河流物理学搬到图上。">
         <Eq hl={id==="intuition"}
           tex="\text{Eq.1 (heat)}:\;\;\frac{\partial x}{\partial t}=\mathrm{div}(D\nabla x)"/>
         <Eq hl={id==="intuition"}
           tex="\text{Eq.2 (CDE)}:\;\;\frac{\partial x}{\partial t}=\mathrm{div}(D\nabla x)-\mathrm{div}(\mathbf v\,x)"/>
       </Block>
 
-      {/* step 3: topology — 图扩散项 GRAND */}
+      {/* step 3: topology，图扩散项 GRAND */}
       <Block active={id==="diffusion"} color={A_DIFF} eyebrow="图上的扩散项 · DIFFUSION (GRAND)"
         onOpen={open} syms={["Eq3Grad","Eq4Div","Eq5GRAND","gradX","divX","Amatrix","aij","hadamard","Imatrix","Dmatrix"]}
         note="把连续 PDE 在图上离散：边上的「梯度」= 端点特征差，节点上的「散度」= 邻居求和。代入 heat 方程得 GRAND 动力学（已有的扩散类 GNN 全在此框架下）。">
@@ -890,7 +890,7 @@ function FormulaPanel({ step, tweaks }) {
           tex="\frac{dX(t)}{dt}=\mathrm{div}\bigl(D(X(t),t)\odot\nabla X(t)\bigr)=(A(X(t))-I)\,X(t)\;\;\text{(Eq.5)}"/>
       </Block>
 
-      {/* step 4: attribute — 图对流项（CDE 核心 ★） */}
+      {/* step 4: attribute，图对流项（CDE 核心 ★） */}
       <Block active={id==="convection"} color={A_CONV} eyebrow="图上的对流项 · CONVECTION ★"
         onOpen={open} syms={["Eq8CDEGraph","Eq9Conv","Vij","Vmatrix","hadamard","divX","EdgeAttention1","AppendixBTypo"]}
         note="CDE 在 GRAND 之上加的全部贡献。每条边 (i,j) 配速度向量 V_ij ∈ ℝ^r；节点的对流贡献 = 邻居特征与边速度的逐元素积之和。">
@@ -900,7 +900,7 @@ function FormulaPanel({ step, tweaks }) {
           tex="\bigl(\mathrm{div}(V\odot X)\bigr)_i=\textstyle\sum_{j:(i,j)\in E}V_{ij}\odot x_j\;\;\text{(Eq.9)}"/>
       </Block>
 
-      {/* step 5: fusion — Velocity learnable formula (Eq.10 ★★) */}
+      {/* step 5: fusion，Velocity learnable formula (Eq.10 ★★) */}
       <Block active={id==="velocity"} color={A_VEL} eyebrow="Velocity 公式 · VELOCITY (Eq.10) ★★"
         onOpen={open} syms={["Eq10Velocity","Vij","sigma","Wmatrix","xi","gradX","OutputLowHigh"]}
         note="全文最重要一公式：速度由特征差驱动。同质邻居 → V≈0 → 退回纯扩散；异质邻居 → V 显著 → 对流主导。W 和 σ 让模型自己学「该往哪流」。">
@@ -908,7 +908,7 @@ function FormulaPanel({ step, tweaks }) {
           tex="V_{ij}(t)=\sigma\bigl(W\,(x_j(t)-x_i(t))\bigr)\;\;\text{(Eq.10)}"/>
       </Block>
 
-      {/* step 6: kmeans — ODE solver */}
+      {/* step 6: kmeans，ODE solver */}
       <Block active={id==="ode"} color={A_OUT} eyebrow="ODE 求解 · ODE SOLVER"
         onOpen={open} syms={["Tint","tau","ODESolverEuler","ODESolverRK4","Algorithm1","Xt","AlphaBetaResidual","EarlyStopPath"]}
         note={`论文 T=1.0 已饱和，T=5.0 反而下降。RK4 在 Minesweeper 上比 Euler 显著好（Table 3：93.05 vs 87.13）。当前积分时间 T = ${tweaks.alpha.toFixed(2)}（playground 用 alpha 滑块代理）。`}>
@@ -918,7 +918,7 @@ function FormulaPanel({ step, tweaks }) {
           tex="X(T)=X(0)+\int_0^T f(X(s))\,ds,\quad L=T/\tau\;\text{ steps}"/>
       </Block>
 
-      {/* step 7: cprop — 节点分类输出 */}
+      {/* step 7: cprop，节点分类输出 */}
       <Block active={id==="classify"} color={A_OUT} eyebrow="分类输出 · CLASSIFY"
         onOpen={open} syms={["Algorithm1","Xt","Tint","yu"]}
         note="Algorithm 1 step 3-4：取 ODE 解的终态 X(T) → MLP 分类头 → 半监督 cross-entropy 损失（仅在训练节点上累加）。所有可学参数（input MLP、ODE 内部 W/α/β、分类头）端到端联合优化。">
@@ -928,17 +928,17 @@ function FormulaPanel({ step, tweaks }) {
           tex="\mathcal L = -\sum_{i\in V_{\mathrm{train}}}\log p_{i,\,y_i}\quad\text{(半监督 cross-entropy)}"/>
       </Block>
 
-      {/* step 8: loss — 异质 benchmark 表现 */}
+      {/* step 8: loss，异质 benchmark 表现 */}
       <Block active={id==="benchmark"} color={A_LOSS} eyebrow="异质图 · BENCHMARK"
         onOpen={open} syms={["hedge","hadj","yu","E","EarlyStopPath"]}
-        note="先用 h_edge / h_adj 量化「异质性多强」（下方两式），再看 paper Table 2：在 h_adj 越低（异质性越强）的数据集上，CDE-GRAND 改进越大 — Roman-empire (h_adj=−0.05) +20pp, Minesweeper (0.01) +19pp, Wiki-cooc (−0.03) +6pp。详细 ACC 表与 Figure 1 复现见下方训练动力学面板 →">
+        note="先用 h_edge / h_adj 量化「异质性多强」（下方两式），再看 paper Table 2：在 h_adj 越低（异质性越强）的数据集上，CDE-GRAND 改进越大，Roman-empire (h_adj=−0.05) +20pp, Minesweeper (0.01) +19pp, Wiki-cooc (−0.03) +6pp。详细 ACC 表与 Figure 1 复现见下方训练动力学面板 →">
         <Eq hl={id==="benchmark"}
           tex="h_{\mathrm{edge}}=\frac{|\{(u,v)\in E\,:\,y_u=y_v\}|}{|E|}\;\;\text{(Eq.6, Def.1)}"/>
         <Eq hl={id==="benchmark"}
-          tex="h_{\mathrm{adj}}=\frac{h_{\mathrm{edge}}-\sum_k D_k^2/(2|E|)^2}{1-\sum_k D_k^2/(2|E|)^2}\;\;\text{(Eq.7, Def.2 — Platonov 2022)}"/>
+          tex="h_{\mathrm{adj}}=\frac{h_{\mathrm{edge}}-\sum_k D_k^2/(2|E|)^2}{1-\sum_k D_k^2/(2|E|)^2}\;\;\text{(Eq.7, Def.2，Platonov 2022)}"/>
       </Block>
 
-      {/* step 9: output — Plug-in 哲学 */}
+      {/* step 9: output，Plug-in 哲学 */}
       <Block active={id==="plugin"} color={A_VEL} eyebrow="Plug-in 哲学 · PLUG-IN"
         onOpen={open} syms={["Amatrix","aij","Eq11AttnTRANS","Eq12AttnGAT","Vmatrix"]}
         note="CDE = (任何 diffusion baseline) + 对流项。论文 Table 4：四种 baseline (LAP/GAT/TRANS/GraphBel) + CDE 都稳定提升。计算成本只增加 ~10% 训练 / ~1% 推理（Table 5）。">

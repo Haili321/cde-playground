@@ -292,7 +292,7 @@ function CDETrainingDynamics({ cde, tIdx, active }) {
           </svg>
           <div style={{fontSize:10.5, color:"#827d75", marginTop:6, lineHeight:1.55}}>
             ★ peak · paper 文字仅描述「improves to <i>saturation point</i>」（line 1112-1118），
-            未描述过饱和后大幅下降 — T=5 较峰值仅微降 <InlineKatex tex="<0.5\,\mathrm{pp}"/>。
+            未描述过饱和后大幅下降，T=5 较峰值仅微降 <InlineKatex tex="<0.5\,\mathrm{pp}"/>。
           </div>
         </div>
 
@@ -433,7 +433,7 @@ function CDEFigure1({ tweaks, active }) {
       <div style={{fontSize:11, color:"#3d3a35", marginBottom:8, lineHeight:1.55}}>
         在合成图上调控边同质率 <InlineKatex tex="h_{\mathrm{edge}}"/>。
         论文 Figure 1 显示 CDE 在 <InlineKatex tex="h<0.5"/> 区段碾压 GRAND/GCN/ACM-GCN
-        — 以下是用 playground 的 toy ODE 在浏览器里实算的版本。
+        以下是用 playground 的 toy ODE 在浏览器里实算的版本。
         <span style={{color:"#a8a194"}}>· 调 β 滑块改变 convection 强度看曲线变化。</span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%", height:"auto",
